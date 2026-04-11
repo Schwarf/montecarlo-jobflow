@@ -1,0 +1,8 @@
+services:
+  api-orchestrator:
+    build:
+      context: ./api-orchestrator
+      dockerfile: Dockerfile
+    container_name: api-orchestrator
+    ports:
+      - "8080:8080"
