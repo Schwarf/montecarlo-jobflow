@@ -9,11 +9,17 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
+type VariableSpec struct {
+	Name  string `json:"name"`
+	Lower string `json:"lower"`
+	Upper string `json:"upper"`
+}
+
 type CreateJobRequest struct {
-	Name        string `json:"name"`
-	Integrand   string `json:"integrand"`
-	Dimensions  int    `json:"dimensions"`
-	Evaluations int    `json:"evaluations"`
+	Name        string         `json:"name"`
+	Integrand   string         `json:"integrand"`
+	Variables   []VariableSpec `json:"variables"`
+	Evaluations int            `json:"evaluations"`
 }
 
 type CreateJobResponse struct {
