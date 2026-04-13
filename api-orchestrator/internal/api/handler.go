@@ -12,11 +12,30 @@ func HealthHandler(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+	defer r.Body.Close()
 
-	writeJSON(w, http.StatusOK, map[string]string{
-		"status":  "ok",
-		"service": "api-orchestrator",
-	})
+	var req CreateJobRequest
+
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+
+	if err := dec.Decode(&req); err != nil {
+		writeJSON(w, http.StatusOK, map[string]string{
+			"status":  "ok",
+			"service": "api-orchestrator",
+		})
+		return
+	}
+
+	if err := req.ValidateBasic(); err != nil {
+		writeJSON(w, http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+		return
+	}
+	resp := CreateJobResponse{
+		JobID:  "job-1",
+		Status: "queued",
+	}
+	writeJSON(w, http.StatusAccepted, resp)
 }
 
 func CreateJobHandler(w http.ResponseWriter, r *http.Request) {
