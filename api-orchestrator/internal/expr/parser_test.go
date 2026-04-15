@@ -104,6 +104,22 @@ func TestParseParenthesizedNumber(t *testing.T) {
 	}
 }
 
+func TestParseDoubleParenthesizedNumber(t *testing.T) {
+	expr, err := parseForTest(t, "((7))")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	num, ok := expr.(*NumberExpression)
+	if !ok {
+		t.Fatalf("expected *NumberExpr, got %T", expr)
+	}
+
+	if num.Value != "7" {
+		t.Fatalf("expected value %q, got %q", "7", num.Value)
+	}
+}
+
 func TestParseParenthesizedIdentifier(t *testing.T) {
 	expr, err := parseForTest(t, "(x)")
 	if err != nil {
@@ -117,6 +133,22 @@ func TestParseParenthesizedIdentifier(t *testing.T) {
 
 	if variable.Name != "x" {
 		t.Fatalf("expected name %q, got %q", "x", variable.Name)
+	}
+}
+
+func TestParseDoubleParenthesizedIdentifier(t *testing.T) {
+	expr, err := parseForTest(t, "((x_0))")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	variable, ok := expr.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected *VariableExpr, got %T", expr)
+	}
+
+	if variable.Name != "x_0" {
+		t.Fatalf("expected name %q, got %q", "x_0", variable.Name)
 	}
 }
 

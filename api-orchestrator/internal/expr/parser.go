@@ -31,7 +31,7 @@ func (p *Parser) advance() Token {
 }
 
 func (p *Parser) Parse() (Expression, error) {
-	expression, err := p.parsePrimary()
+	expression, err := p.parseExpression()
 	if err != nil {
 		return nil, err
 	}
@@ -41,6 +41,10 @@ func (p *Parser) Parse() (Expression, error) {
 		return nil, fmt.Errorf("unexpected token %q at position %d", token.Lexeme, token.Pos)
 	}
 	return expression, nil
+}
+
+func (p *Parser) parseExpression() (Expression, error) {
+	return p.parsePrimary()
 }
 
 func (p *Parser) parsePrimary() (Expression, error) {
