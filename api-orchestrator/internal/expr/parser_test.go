@@ -705,3 +705,248 @@ func TestParseMissingRightParenAfterTermFails(t *testing.T) {
 		t.Fatal("expected error, got nil")
 	}
 }
+
+func TestParseUnaryMinusVariable(t *testing.T) {
+	expr, err := parseForTest(t, "-x")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	unaryExpr, ok := expr.(*UnaryExpression)
+	if !ok {
+		t.Fatalf("expected *UnaryExpression, got %T", expr)
+	}
+
+	if unaryExpr.Operator != TokenMinus {
+		t.Fatalf("expected operator TokenMinus, got %v", unaryExpr.Operator)
+	}
+
+	right, ok := unaryExpr.Right.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected right to be *VariableExpression, got %T", unaryExpr.Right)
+	}
+
+	if right.Name != "x" {
+		t.Fatalf("expected variable name x, got %q", right.Name)
+	}
+}
+
+func TestParseUnaryMinusNumber(t *testing.T) {
+	expr, err := parseForTest(t, "-2")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	unaryExpr, ok := expr.(*UnaryExpression)
+	if !ok {
+		t.Fatalf("expected *UnaryExpression, got %T", expr)
+	}
+
+	if unaryExpr.Operator != TokenMinus {
+		t.Fatalf("expected operator TokenMinus, got %v", unaryExpr.Operator)
+	}
+
+	right, ok := unaryExpr.Right.(*NumberExpression)
+	if !ok {
+		t.Fatalf("expected right to be *NumberExpression, got %T", unaryExpr.Right)
+	}
+
+	if right.Value != "2" {
+		t.Fatalf("expected number value 2, got %q", right.Value)
+	}
+}
+
+func TestParseUnaryMinusParenthesizedExpression(t *testing.T) {
+	expr, err := parseForTest(t, "-(a+b)")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	unaryExpr, ok := expr.(*UnaryExpression)
+	if !ok {
+		t.Fatalf("expected *UnaryExpression, got %T", expr)
+	}
+
+	if unaryExpr.Operator != TokenMinus {
+		t.Fatalf("expected operator TokenMinus, got %v", unaryExpr.Operator)
+	}
+
+	right, ok := unaryExpr.Right.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected right to be *BinaryExpression, got %T", unaryExpr.Right)
+	}
+
+	if right.Operator != TokenPlus {
+		t.Fatalf("expected operator TokenPlus, got %v", right.Operator)
+	}
+}
+
+func TestParseMultiplyByUnaryMinus(t *testing.T) {
+	expr, err := parseForTest(t, "3*-2")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	binaryExpr, ok := expr.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected *BinaryExpression, got %T", expr)
+	}
+
+	if binaryExpr.Operator != TokenMultiply {
+		t.Fatalf("expected operator TokenMultiply, got %v", binaryExpr.Operator)
+	}
+
+	left, ok := binaryExpr.Left.(*NumberExpression)
+	if !ok {
+		t.Fatalf("expected left to be *NumberExpression, got %T", binaryExpr.Left)
+	}
+
+	if left.Value != "3" {
+		t.Fatalf("expected left value 3, got %q", left.Value)
+	}
+
+	right, ok := binaryExpr.Right.(*UnaryExpression)
+	if !ok {
+		t.Fatalf("expected right to be *UnaryExpression, got %T", binaryExpr.Right)
+	}
+
+	if right.Operator != TokenMinus {
+		t.Fatalf("expected unary operator TokenMinus, got %v", right.Operator)
+	}
+
+	rightNumber, ok := right.Right.(*NumberExpression)
+	if !ok {
+		t.Fatalf("expected unary right to be *NumberExpression, got %T", right.Right)
+	}
+
+	if rightNumber.Value != "2" {
+		t.Fatalf("expected unary right value 2, got %q", rightNumber.Value)
+	}
+}
+
+func TestParseDivideByUnaryMinus(t *testing.T) {
+	expr, err := parseForTest(t, "x/-y")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	binaryExpr, ok := expr.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected *BinaryExpression, got %T", expr)
+	}
+
+	if binaryExpr.Operator != TokenDivide {
+		t.Fatalf("expected operator TokenDivide, got %v", binaryExpr.Operator)
+	}
+
+	left, ok := binaryExpr.Left.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected left to be *VariableExpression, got %T", binaryExpr.Left)
+	}
+
+	if left.Name != "x" {
+		t.Fatalf("expected left name x, got %q", left.Name)
+	}
+
+	right, ok := binaryExpr.Right.(*UnaryExpression)
+	if !ok {
+		t.Fatalf("expected right to be *UnaryExpression, got %T", binaryExpr.Right)
+	}
+
+	if right.Operator != TokenMinus {
+		t.Fatalf("expected unary operator TokenMinus, got %v", right.Operator)
+	}
+
+	rightVar, ok := right.Right.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected unary right to be *VariableExpression, got %T", right.Right)
+	}
+
+	if rightVar.Name != "y" {
+		t.Fatalf("expected unary right name y, got %q", rightVar.Name)
+	}
+}
+
+func TestParseDoubleUnaryMinus(t *testing.T) {
+	expr, err := parseForTest(t, "--x")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	outer, ok := expr.(*UnaryExpression)
+	if !ok {
+		t.Fatalf("expected outer to be *UnaryExpression, got %T", expr)
+	}
+
+	if outer.Operator != TokenMinus {
+		t.Fatalf("expected outer operator TokenMinus, got %v", outer.Operator)
+	}
+
+	inner, ok := outer.Right.(*UnaryExpression)
+	if !ok {
+		t.Fatalf("expected inner to be *UnaryExpression, got %T", outer.Right)
+	}
+
+	if inner.Operator != TokenMinus {
+		t.Fatalf("expected inner operator TokenMinus, got %v", inner.Operator)
+	}
+
+	rightVar, ok := inner.Right.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected inner right to be *VariableExpression, got %T", inner.Right)
+	}
+
+	if rightVar.Name != "x" {
+		t.Fatalf("expected variable name x, got %q", rightVar.Name)
+	}
+}
+
+func TestParseUnaryPlusVariable(t *testing.T) {
+	expr, err := parseForTest(t, "+x")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	unaryExpr, ok := expr.(*UnaryExpression)
+	if !ok {
+		t.Fatalf("expected *UnaryExpression, got %T", expr)
+	}
+
+	if unaryExpr.Operator != TokenPlus {
+		t.Fatalf("expected operator TokenPlus, got %v", unaryExpr.Operator)
+	}
+
+	right, ok := unaryExpr.Right.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected right to be *VariableExpression, got %T", unaryExpr.Right)
+	}
+
+	if right.Name != "x" {
+		t.Fatalf("expected variable name x, got %q", right.Name)
+	}
+}
+
+func TestParseMultiplyByUnaryPlus(t *testing.T) {
+	expr, err := parseForTest(t, "x*+y")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	binaryExpr, ok := expr.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected *BinaryExpression, got %T", expr)
+	}
+
+	if binaryExpr.Operator != TokenMultiply {
+		t.Fatalf("expected operator TokenMultiply, got %v", binaryExpr.Operator)
+	}
+
+	right, ok := binaryExpr.Right.(*UnaryExpression)
+	if !ok {
+		t.Fatalf("expected right to be *UnaryExpression, got %T", binaryExpr.Right)
+	}
+
+	if right.Operator != TokenPlus {
+		t.Fatalf("expected unary operator TokenPlus, got %v", right.Operator)
+	}
+}
