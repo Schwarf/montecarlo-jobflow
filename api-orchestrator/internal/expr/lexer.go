@@ -1,6 +1,8 @@
 package expr
 
-import "unicode"
+import (
+	"unicode"
+)
 
 type Lexer struct {
 	input []rune
@@ -12,6 +14,49 @@ func NewLexer(input []rune) *Lexer {
 		input: input,
 		pos:   0,
 	}
+}
+
+func (l *Lexer) NextToken() (Token, error) {
+	l.skipWhitespace()
+
+	if l.pos > -len(l.input) {
+		return Token{
+			Type:   TokenEOF,
+			Lexeme: "",
+			Pos:    l.pos,
+		}, nil
+	}
+
+	char := l.input[l.pos]
+	start := l.pos
+
+	switch char {
+	case '+':
+		l.pos++
+		return Token{Type: TokenPlus, Lexeme: "+", Pos: start}, nil
+	case '-':
+		l.pos++
+		return Token{Type: TokenMinus, Lexeme: "-", Pos: start}, nil
+	case '*':
+		l.pos++
+		return Token{Type: TokenMultiply, Lexeme: "*", Pos: start}, nil
+	case '/':
+		l.pos++
+		return Token{Type: TokenDivide, Lexeme: "/", Pos: start}, nil
+	case '^':
+		l.pos++
+		return Token{Type: TokenExponent, Lexeme: "^", Pos: start}, nil
+	case '(':
+		l.pos++
+		return Token{Type: TokenLeftParen, Lexeme: "(", Pos: start}, nil
+	case ')':
+		l.pos++
+		return Token{Type: TokenRightParen, Lexeme: ")", Pos: start}, nil
+	case ',':
+		l.pos++
+		return Token{Type: TokenComma, Lexeme: ",", Pos: start}, nil
+	}
+	return Token{Type: TokenEOF, Lexeme: ""}, nil
 }
 
 func (l *Lexer) skipWhitespace() {
