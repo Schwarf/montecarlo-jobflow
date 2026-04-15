@@ -64,7 +64,7 @@ func (l *Lexer) NextToken() (Token, error) {
 		return Token{Type: TokenDivide, Lexeme: "/", Pos: start}, nil
 	case '^':
 		l.pos++
-		return Token{Type: TokenExponent, Lexeme: "^", Pos: start}, nil
+		return Token{Type: TokenPower, Lexeme: "^", Pos: start}, nil
 	case '(':
 		l.pos++
 		return Token{Type: TokenLeftParen, Lexeme: "(", Pos: start}, nil

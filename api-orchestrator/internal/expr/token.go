@@ -13,7 +13,7 @@ const (
 	TokenMinus
 	TokenMultiply
 	TokenDivide
-	TokenExponent
+	TokenPower
 	TokenLeftParen
 	TokenRightParen
 	TokenComma
@@ -41,7 +41,7 @@ func (t TokenType) String() string {
 		return "*"
 	case TokenDivide:
 		return "/"
-	case TokenExponent:
+	case TokenPower:
 		return "^"
 	case TokenLeftParen:
 		return "("

@@ -57,7 +57,7 @@ func TestLexerBasicOperators(t *testing.T) {
 		TokenIdentifier, // z
 		TokenDivide,     // /
 		TokenNumber,     // 2
-		TokenExponent,   // ^
+		TokenPower,      // ^
 		TokenIdentifier, // a
 		TokenEOF,
 	}
@@ -105,7 +105,7 @@ func TestLexerParenthesesAndUnaryMinus(t *testing.T) {
 	gotTypes := collectTokenTypes(tokens)
 	wantTypes := []TokenType{
 		TokenIdentifier,
-		TokenExponent,
+		TokenPower,
 		TokenLeftParen,
 		TokenMinus,
 		TokenNumber,

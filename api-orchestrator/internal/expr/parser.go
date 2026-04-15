@@ -72,8 +72,33 @@ func (p *Parser) parseExpression() (Expression, error) {
 	return left, nil
 }
 
-func (p *Parser) parseTerm() (Expression, error) {
+// power is right-associative: 3^4^5 = 3^(4^5)
+func (p *Parser) parsePower() (Expression, error) {
 	left, err := p.parseUnary()
+	if err != nil {
+		return nil, err
+	}
+
+	if p.current().Type == TokenPower {
+		operator := p.current().Type
+		p.advance()
+
+		right, err := p.parsePower()
+		if err != nil {
+			return nil, err
+		}
+
+		return &BinaryExpression{
+			Left:     left,
+			Operator: operator,
+			Right:    right,
+		}, nil
+	}
+	return left, nil
+}
+
+func (p *Parser) parseTerm() (Expression, error) {
+	left, err := p.parsePower()
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +111,7 @@ func (p *Parser) parseTerm() (Expression, error) {
 		operator := token.Type
 		p.advance()
 
-		right, err := p.parseUnary()
+		right, err := p.parsePower()
 		if err != nil {
 			return nil, err
 		}
