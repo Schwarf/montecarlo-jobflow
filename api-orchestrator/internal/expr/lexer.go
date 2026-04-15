@@ -10,17 +10,35 @@ type Lexer struct {
 	pos   int
 }
 
-func NewLexer(input []rune) *Lexer {
+func NewLexer(input string) *Lexer {
 	return &Lexer{
-		input: input,
+		input: []rune(input),
 		pos:   0,
 	}
+}
+
+func LexAll(input string) ([]Token, error) {
+	lexer := NewLexer(input)
+	var tokens []Token
+
+	for {
+		tok, err := lexer.NextToken()
+		if err != nil {
+			return nil, err
+		}
+		tokens = append(tokens, tok)
+		if tok.Type == TokenEOF {
+			break
+		}
+	}
+
+	return tokens, nil
 }
 
 func (l *Lexer) NextToken() (Token, error) {
 	l.skipWhitespace()
 
-	if l.pos > len(l.input) {
+	if l.pos >= len(l.input) {
 		return Token{
 			Type:   TokenEOF,
 			Lexeme: "",
@@ -57,7 +75,16 @@ func (l *Lexer) NextToken() (Token, error) {
 		l.pos++
 		return Token{Type: TokenComma, Lexeme: ",", Pos: start}, nil
 	}
-	return Token{Type: TokenEOF, Lexeme: ""}, nil
+
+	if isDigit(char) || char == '.' {
+		return l.readNumber()
+	}
+
+	if isIdentifierStart(char) {
+		return l.readIdentifier(), nil
+	}
+
+	return Token{}, fmt.Errorf("unexpected character %q at position %d", char, start)
 }
 
 func (l *Lexer) readNumber() (Token, error) {
@@ -107,6 +134,7 @@ func (l *Lexer) readNumber() (Token, error) {
 			l.pos++
 		}
 	}
+
 	return Token{Type: TokenNumber, Lexeme: string(l.input[start:l.pos]), Pos: start}, nil
 
 }
