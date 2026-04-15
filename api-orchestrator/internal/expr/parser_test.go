@@ -195,7 +195,7 @@ func TestParseUnexpectedTokenFails(t *testing.T) {
 }
 
 func TestParseAdditionNumbers(t *testing.T) {
-	expr, err := parseForTest(t, "(1+2)")
+	expr, err := parseForTest(t, "1+2")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -313,4 +313,18 @@ func TestParseAssociativity(t *testing.T) {
 		t.Fatalf("expected left.Operator %v, got %v", TokenPlus, left.Operator)
 	}
 
+}
+
+func TestParseMissingRightOperandAfterPlusFails(t *testing.T) {
+	_, err := parseForTest(t, "x+a+1+")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestParseMissingRightOperandAfterMinusFails(t *testing.T) {
+	_, err := parseForTest(t, "2-")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
 }
