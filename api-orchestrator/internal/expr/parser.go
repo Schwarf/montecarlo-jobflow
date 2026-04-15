@@ -153,6 +153,27 @@ func (p *Parser) parsePrimary() (Expression, error) {
 		return &NumberExpression{Value: token.Lexeme}, nil
 
 	case TokenIdentifier:
+		if p.peek().Type == TokenLeftParen {
+			functionName := token.Lexeme
+			p.advance() // consume identifier
+			p.advance() // consume '('
+
+			argument, err := p.parseExpression()
+			if err != nil {
+				return nil, err
+			}
+
+			if p.current().Type != TokenRightParen {
+				return nil, fmt.Errorf("expected ')' after function argument at position %d but got '%s'", p.current().Pos, p.current().Lexeme)
+			}
+			p.advance() // consume ')'
+
+			return &FunctionCallExpression{
+				Name:     functionName,
+				Argument: argument,
+			}, nil
+		}
+
 		p.advance()
 		return &VariableExpression{Name: token.Lexeme}, nil
 
@@ -173,4 +194,11 @@ func (p *Parser) parsePrimary() (Expression, error) {
 	default:
 		return nil, fmt.Errorf("expected primary expression at position %d, got %q", token.Pos, token.Lexeme)
 	}
+}
+
+func (p *Parser) peek() Token {
+	if p.pos+1 >= len(p.tokens) {
+		return p.tokens[len(p.tokens)-1]
+	}
+	return p.tokens[p.pos+1]
 }

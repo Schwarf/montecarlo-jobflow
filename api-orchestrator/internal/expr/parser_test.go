@@ -1242,3 +1242,321 @@ func TestParsePowerOperatorWithoutValidRightSide(t *testing.T) {
 		t.Fatal("expected error, got nil")
 	}
 }
+
+func TestParseFunctionCallSimple(t *testing.T) {
+	expr, err := parseForTest(t, "sin(x)")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	callExpr, ok := expr.(*FunctionCallExpression)
+	if !ok {
+		t.Fatalf("expected *FunctionCallExpression, got %T", expr)
+	}
+
+	if callExpr.Name != "sin" {
+		t.Fatalf("expected function name sin, got %q", callExpr.Name)
+	}
+
+	arg, ok := callExpr.Argument.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected argument to be *VariableExpression, got %T", callExpr.Argument)
+	}
+
+	if arg.Name != "x" {
+		t.Fatalf("expected argument name x, got %q", arg.Name)
+	}
+}
+
+func TestParseFunctionCallWithBinaryArgument(t *testing.T) {
+	expr, err := parseForTest(t, "sin(a+b)")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	callExpr, ok := expr.(*FunctionCallExpression)
+	if !ok {
+		t.Fatalf("expected *FunctionCallExpression, got %T", expr)
+	}
+
+	if callExpr.Name != "sin" {
+		t.Fatalf("expected function name sin, got %q", callExpr.Name)
+	}
+
+	arg, ok := callExpr.Argument.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected argument to be *BinaryExpression, got %T", callExpr.Argument)
+	}
+
+	if arg.Operator != TokenPlus {
+		t.Fatalf("expected argument operator TokenPlus, got %v", arg.Operator)
+	}
+}
+
+func TestParseFunctionCallInsideMultiplication(t *testing.T) {
+	expr, err := parseForTest(t, "2*sin(x)")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	binaryExpr, ok := expr.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected *BinaryExpression, got %T", expr)
+	}
+
+	if binaryExpr.Operator != TokenMultiply {
+		t.Fatalf("expected operator TokenMultiply, got %v", binaryExpr.Operator)
+	}
+
+	left, ok := binaryExpr.Left.(*NumberExpression)
+	if !ok {
+		t.Fatalf("expected left to be *NumberExpression, got %T", binaryExpr.Left)
+	}
+
+	if left.Value != "2" {
+		t.Fatalf("expected left value 2, got %q", left.Value)
+	}
+
+	right, ok := binaryExpr.Right.(*FunctionCallExpression)
+	if !ok {
+		t.Fatalf("expected right to be *FunctionCallExpression, got %T", binaryExpr.Right)
+	}
+
+	if right.Name != "sin" {
+		t.Fatalf("expected function name sin, got %q", right.Name)
+	}
+}
+
+func TestParseFunctionCallAsPowerBase(t *testing.T) {
+	expr, err := parseForTest(t, "sin(x)^2")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	binaryExpr, ok := expr.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected *BinaryExpression, got %T", expr)
+	}
+
+	if binaryExpr.Operator != TokenPower {
+		t.Fatalf("expected operator TokenPower, got %v", binaryExpr.Operator)
+	}
+
+	left, ok := binaryExpr.Left.(*FunctionCallExpression)
+	if !ok {
+		t.Fatalf("expected left to be *FunctionCallExpression, got %T", binaryExpr.Left)
+	}
+
+	if left.Name != "sin" {
+		t.Fatalf("expected function name sin, got %q", left.Name)
+	}
+
+	right, ok := binaryExpr.Right.(*NumberExpression)
+	if !ok {
+		t.Fatalf("expected right to be *NumberExpression, got %T", binaryExpr.Right)
+	}
+
+	if right.Value != "2" {
+		t.Fatalf("expected right value 2, got %q", right.Value)
+	}
+}
+
+func TestParseNestedFunctionCall(t *testing.T) {
+	expr, err := parseForTest(t, "sin(cos(x))")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	outer, ok := expr.(*FunctionCallExpression)
+	if !ok {
+		t.Fatalf("expected outer to be *FunctionCallExpression, got %T", expr)
+	}
+
+	if outer.Name != "sin" {
+		t.Fatalf("expected outer function name sin, got %q", outer.Name)
+	}
+
+	inner, ok := outer.Argument.(*FunctionCallExpression)
+	if !ok {
+		t.Fatalf("expected outer argument to be *FunctionCallExpression, got %T", outer.Argument)
+	}
+
+	if inner.Name != "cos" {
+		t.Fatalf("expected inner function name cos, got %q", inner.Name)
+	}
+
+	innerArg, ok := inner.Argument.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected inner argument to be *VariableExpression, got %T", inner.Argument)
+	}
+
+	if innerArg.Name != "x" {
+		t.Fatalf("expected inner argument name x, got %q", innerArg.Name)
+	}
+}
+
+func TestParseIdentifierWithoutParenthesesIsVariable(t *testing.T) {
+	expr, err := parseForTest(t, "sin")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	varExpr, ok := expr.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected *VariableExpression, got %T", expr)
+	}
+
+	if varExpr.Name != "sin" {
+		t.Fatalf("expected variable name sin, got %q", varExpr.Name)
+	}
+}
+
+func TestParseFunctionCallWithComplexArgumentAndOuterPower(t *testing.T) {
+	expr, err := parseForTest(t, "log(x^2+2*x+1)^4")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	outerPower, ok := expr.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected outer expression to be *BinaryExpression, got %T", expr)
+	}
+
+	if outerPower.Operator != TokenPower {
+		t.Fatalf("expected outer operator TokenPower, got %v", outerPower.Operator)
+	}
+
+	callExpr, ok := outerPower.Left.(*FunctionCallExpression)
+	if !ok {
+		t.Fatalf("expected outer left to be *FunctionCallExpression, got %T", outerPower.Left)
+	}
+
+	if callExpr.Name != "log" {
+		t.Fatalf("expected function name log, got %q", callExpr.Name)
+	}
+
+	outerExponent, ok := outerPower.Right.(*NumberExpression)
+	if !ok {
+		t.Fatalf("expected outer right to be *NumberExpression, got %T", outerPower.Right)
+	}
+
+	if outerExponent.Value != "4" {
+		t.Fatalf("expected outer exponent value 4, got %q", outerExponent.Value)
+	}
+
+	sumTop, ok := callExpr.Argument.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected function argument to be *BinaryExpression, got %T", callExpr.Argument)
+	}
+
+	if sumTop.Operator != TokenPlus {
+		t.Fatalf("expected top-level argument operator TokenPlus, got %v", sumTop.Operator)
+	}
+
+	leftSum, ok := sumTop.Left.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected left side of top-level sum to be *BinaryExpression, got %T", sumTop.Left)
+	}
+
+	if leftSum.Operator != TokenPlus {
+		t.Fatalf("expected left nested operator TokenPlus, got %v", leftSum.Operator)
+	}
+
+	xSquared, ok := leftSum.Left.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected left side of nested sum to be *BinaryExpression, got %T", leftSum.Left)
+	}
+
+	if xSquared.Operator != TokenPower {
+		t.Fatalf("expected x^2 operator TokenPower, got %v", xSquared.Operator)
+	}
+
+	xVar, ok := xSquared.Left.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected left side of x^2 to be *VariableExpression, got %T", xSquared.Left)
+	}
+
+	if xVar.Name != "x" {
+		t.Fatalf("expected variable name x, got %q", xVar.Name)
+	}
+
+	xSquaredExponent, ok := xSquared.Right.(*NumberExpression)
+	if !ok {
+		t.Fatalf("expected right side of x^2 to be *NumberExpression, got %T", xSquared.Right)
+	}
+
+	if xSquaredExponent.Value != "2" {
+		t.Fatalf("expected exponent value 2, got %q", xSquaredExponent.Value)
+	}
+
+	twoTimesX, ok := leftSum.Right.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected right side of nested sum to be *BinaryExpression, got %T", leftSum.Right)
+	}
+
+	if twoTimesX.Operator != TokenMultiply {
+		t.Fatalf("expected 2*x operator TokenMultiply, got %v", twoTimesX.Operator)
+	}
+
+	two, ok := twoTimesX.Left.(*NumberExpression)
+	if !ok {
+		t.Fatalf("expected left side of 2*x to be *NumberExpression, got %T", twoTimesX.Left)
+	}
+
+	if two.Value != "2" {
+		t.Fatalf("expected left factor value 2, got %q", two.Value)
+	}
+
+	xVar2, ok := twoTimesX.Right.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected right side of 2*x to be *VariableExpression, got %T", twoTimesX.Right)
+	}
+
+	if xVar2.Name != "x" {
+		t.Fatalf("expected variable name x, got %q", xVar2.Name)
+	}
+
+	one, ok := sumTop.Right.(*NumberExpression)
+	if !ok {
+		t.Fatalf("expected right side of top-level sum to be *NumberExpression, got %T", sumTop.Right)
+	}
+
+	if one.Value != "1" {
+		t.Fatalf("expected constant value 1, got %q", one.Value)
+	}
+}
+
+func TestParseFunctionCallEmptyArgument(t *testing.T) {
+	_, err := parseForTest(t, "log()")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestParseFunctionCallMissingClosingParen(t *testing.T) {
+	_, err := parseForTest(t, "sin(x")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestParseFunctionCallMissingArgumentAfterOperator(t *testing.T) {
+	_, err := parseForTest(t, "sin(x+)")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestParseFunctionCallMissingOpeningParen(t *testing.T) {
+	_, err := parseForTest(t, "exp x")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestParseFunctionCallUnexpectedTrailingToken(t *testing.T) {
+	_, err := parseForTest(t, "sin(x))")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
