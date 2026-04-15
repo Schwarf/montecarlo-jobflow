@@ -207,24 +207,110 @@ func TestParseAdditionNumbers(t *testing.T) {
 
 	left, ok := binaryExpr.Left.(*NumberExpression)
 	if !ok {
-		t.Fatalf("expected Left to be *NumberExpression, got %T", binaryExpr.Left)
+		t.Fatalf("expected left to be *NumberExpression, got %T", binaryExpr.Left)
 	}
 
 	right, ok := binaryExpr.Right.(*NumberExpression)
 	if !ok {
-		t.Fatalf("expected Right to be *NumberExpression, got %T", binaryExpr.Left)
+		t.Fatalf("expected right to be *NumberExpression, got %T", binaryExpr.Right)
 	}
 
 	if left.Value != "1" {
-		t.Fatalf("expected left %q, got %q", "1", left.Value)
+		t.Fatalf("expected left.Value %q, got %q", "1", left.Value)
 	}
 
 	if right.Value != "2" {
-		t.Fatalf("expected right %q, got %q", "1", right.Value)
+		t.Fatalf("expected right.Value %q, got %q", "2", right.Value)
 	}
 
-	if binaryExpr.Operator.String() != "+" {
-		t.Fatalf("expected operator %q, got %q", "+", binaryExpr.Operator.String())
+	if binaryExpr.Operator != TokenPlus {
+		t.Fatalf("expected operator %v, got %v", TokenPlus, binaryExpr.Operator)
+	}
+}
+
+func TestParseSubtractIdentifierFromNumber(t *testing.T) {
+	expr, err := parseForTest(t, "(2-x)")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	binaryExpr, ok := expr.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected *BinaryExpression, got %T", expr)
+	}
+
+	left, ok := binaryExpr.Left.(*NumberExpression)
+	if !ok {
+		t.Fatalf("expected left to be *NumberExpression, got %T", binaryExpr.Left)
+	}
+
+	right, ok := binaryExpr.Right.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected right to be *VariableExpression, got %T", binaryExpr.Right)
+	}
+
+	if left.Value != "2" {
+		t.Fatalf("expected left.Value %q, got %q", "2", left.Value)
+	}
+
+	if right.Name != "x" {
+		t.Fatalf("expected right.Name %q, got %q", "x", right.Name)
+	}
+
+	if binaryExpr.Operator != TokenMinus {
+		t.Fatalf("expected operator %q, got %q", TokenMinus, binaryExpr.Operator)
+	}
+}
+
+func TestParseAssociativity(t *testing.T) {
+	expr, err := parseForTest(t, "a+b-c")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	binaryExpr, ok := expr.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected *BinaryExpression, got %T", expr)
+	}
+
+	left, ok := binaryExpr.Left.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected left to be *BinaryExpression, got %T", binaryExpr.Left)
+	}
+
+	right, ok := binaryExpr.Right.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected right to be *VariableExpression, got %T", binaryExpr.Right)
+	}
+
+	leftLeft, ok := left.Left.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected left.Left to be *VariableExpression, got %T", left.Left)
+	}
+
+	leftRight, ok := left.Right.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected leftRight to be *VariableExpression, got %T", leftRight)
+	}
+
+	if right.Name != "c" {
+		t.Fatalf("expected left %q, got %q", "c", right.Name)
+	}
+
+	if binaryExpr.Operator != TokenMinus {
+		t.Fatalf("expected operator %v, got %v", TokenMinus, binaryExpr.Operator)
+	}
+
+	if leftLeft.Name != "a" {
+		t.Fatalf("expected leftLeft.Name %q, got %q", "a", leftLeft.Name)
+	}
+
+	if leftRight.Name != "b" {
+		t.Fatalf("expected leftRight.Name %q, got %q", "b", leftRight.Name)
+	}
+
+	if left.Operator != TokenPlus {
+		t.Fatalf("expected left.Operator %v, got %v", TokenPlus, left.Operator)
 	}
 
 }

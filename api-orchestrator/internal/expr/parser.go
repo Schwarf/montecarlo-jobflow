@@ -58,7 +58,7 @@ func (p *Parser) parseExpression() (Expression, error) {
 		operator := token.Type
 		p.advance()
 
-		right, err := p.parseExpression()
+		right, err := p.parsePrimary()
 		if err != nil {
 			return nil, err
 		}
