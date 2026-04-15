@@ -15,3 +15,10 @@ type VariableExpression struct {
 }
 
 func (v *VariableExpression) expressionNode() {}
+
+type BinaryExpression struct {
+	Left, Right Expression
+	Operator    TokenType
+}
+
+func (b *BinaryExpression) expressionNode() {}

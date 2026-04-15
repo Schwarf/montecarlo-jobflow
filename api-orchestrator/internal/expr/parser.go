@@ -44,7 +44,32 @@ func (p *Parser) Parse() (Expression, error) {
 }
 
 func (p *Parser) parseExpression() (Expression, error) {
-	return p.parsePrimary()
+	left, err := p.parsePrimary()
+	if err != nil {
+		return nil, err
+	}
+
+	for {
+		token := p.current()
+		if token.Type != TokenPlus && token.Type != TokenMinus {
+			break
+		}
+
+		operator := token.Type
+		p.advance()
+
+		right, err := p.parseExpression()
+		if err != nil {
+			return nil, err
+		}
+		left = &BinaryExpression{
+			Left:     left,
+			Operator: operator,
+			Right:    right,
+		}
+	}
+
+	return left, nil
 }
 
 func (p *Parser) parsePrimary() (Expression, error) {
@@ -62,7 +87,7 @@ func (p *Parser) parsePrimary() (Expression, error) {
 	case TokenLeftParen:
 		p.advance()
 
-		expression, err := p.parsePrimary()
+		expression, err := p.parseExpression()
 		if err != nil {
 			return nil, err
 		}

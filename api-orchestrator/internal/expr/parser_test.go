@@ -22,7 +22,7 @@ func TestParseIdentifier(t *testing.T) {
 
 	variable, ok := expr.(*VariableExpression)
 	if !ok {
-		t.Fatalf("expected *VariableExpr, got %T", expr)
+		t.Fatalf("expected *VariableExpression, got %T", expr)
 	}
 
 	if variable.Name != "x" {
@@ -38,7 +38,7 @@ func TestParseIdentifierWithDigit(t *testing.T) {
 
 	variable, ok := expr.(*VariableExpression)
 	if !ok {
-		t.Fatalf("expected *VariableExpr, got %T", expr)
+		t.Fatalf("expected *VariableExpression, got %T", expr)
 	}
 
 	if variable.Name != "x2" {
@@ -54,7 +54,7 @@ func TestParseIdentifierWithUnderscoreAndDigit(t *testing.T) {
 
 	variable, ok := expr.(*VariableExpression)
 	if !ok {
-		t.Fatalf("expected *VariableExpr, got %T", expr)
+		t.Fatalf("expected *VariableExpression, got %T", expr)
 	}
 
 	if variable.Name != "x_11" {
@@ -70,7 +70,7 @@ func TestParseInteger(t *testing.T) {
 
 	num, ok := expr.(*NumberExpression)
 	if !ok {
-		t.Fatalf("expected *NumberExpr, got %T", expr)
+		t.Fatalf("expected *NumberExpression, got %T", expr)
 	}
 
 	if num.Value != "42" {
@@ -84,7 +84,7 @@ func TestParseScientificNumber(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if _, ok := expr.(*NumberExpression); !ok {
-		t.Fatalf("expected *NumberExpr, got %T", expr)
+		t.Fatalf("expected *NumberExpression, got %T", expr)
 	}
 }
 
@@ -96,7 +96,7 @@ func TestParseParenthesizedNumber(t *testing.T) {
 
 	num, ok := expr.(*NumberExpression)
 	if !ok {
-		t.Fatalf("expected *NumberExpr, got %T", expr)
+		t.Fatalf("expected *NumberExpression, got %T", expr)
 	}
 
 	if num.Value != "7" {
@@ -112,7 +112,7 @@ func TestParseDoubleParenthesizedNumber(t *testing.T) {
 
 	num, ok := expr.(*NumberExpression)
 	if !ok {
-		t.Fatalf("expected *NumberExpr, got %T", expr)
+		t.Fatalf("expected *NumberExpression, got %T", expr)
 	}
 
 	if num.Value != "7" {
@@ -128,7 +128,7 @@ func TestParseParenthesizedIdentifier(t *testing.T) {
 
 	variable, ok := expr.(*VariableExpression)
 	if !ok {
-		t.Fatalf("expected *VariableExpr, got %T", expr)
+		t.Fatalf("expected *VariableExpression, got %T", expr)
 	}
 
 	if variable.Name != "x" {
@@ -144,7 +144,7 @@ func TestParseDoubleParenthesizedIdentifier(t *testing.T) {
 
 	variable, ok := expr.(*VariableExpression)
 	if !ok {
-		t.Fatalf("expected *VariableExpr, got %T", expr)
+		t.Fatalf("expected *VariableExpression, got %T", expr)
 	}
 
 	if variable.Name != "x_0" {
@@ -192,4 +192,39 @@ func TestParseUnexpectedTokenFails(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
+}
+
+func TestParseAdditionNumbers(t *testing.T) {
+	expr, err := parseForTest(t, "(1+2)")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	binaryExpr, ok := expr.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected *BinaryExpression, got %T", expr)
+	}
+
+	left, ok := binaryExpr.Left.(*NumberExpression)
+	if !ok {
+		t.Fatalf("expected Left to be *NumberExpression, got %T", binaryExpr.Left)
+	}
+
+	right, ok := binaryExpr.Right.(*NumberExpression)
+	if !ok {
+		t.Fatalf("expected Right to be *NumberExpression, got %T", binaryExpr.Left)
+	}
+
+	if left.Value != "1" {
+		t.Fatalf("expected left %q, got %q", "1", left.Value)
+	}
+
+	if right.Value != "2" {
+		t.Fatalf("expected right %q, got %q", "1", right.Value)
+	}
+
+	if binaryExpr.Operator.String() != "+" {
+		t.Fatalf("expected operator %q, got %q", "+", binaryExpr.Operator.String())
+	}
+
 }
