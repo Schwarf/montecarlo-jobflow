@@ -1560,3 +1560,46 @@ func TestParseFunctionCallUnexpectedTrailingToken(t *testing.T) {
 		t.Fatal("expected error, got nil")
 	}
 }
+
+func TestParseUnaryMinusAppliesAfterPower(t *testing.T) {
+	expr, err := parseForTest(t, "-x^2")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	unaryExpr, ok := expr.(*UnaryExpression)
+	if !ok {
+		t.Fatalf("expected *UnaryExpression, got %T", expr)
+	}
+
+	if unaryExpr.Operator != TokenMinus {
+		t.Fatalf("expected unary operator TokenMinus, got %v", unaryExpr.Operator)
+	}
+
+	powerExpr, ok := unaryExpr.Right.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected unary right to be *BinaryExpression, got %T", unaryExpr.Right)
+	}
+
+	if powerExpr.Operator != TokenPower {
+		t.Fatalf("expected power operator TokenPower, got %v", powerExpr.Operator)
+	}
+
+	base, ok := powerExpr.Left.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected power base to be *VariableExpression, got %T", powerExpr.Left)
+	}
+
+	if base.Name != "x" {
+		t.Fatalf("expected power base name x, got %q", base.Name)
+	}
+
+	exponent, ok := powerExpr.Right.(*NumberExpression)
+	if !ok {
+		t.Fatalf("expected power exponent to be *NumberExpression, got %T", powerExpr.Right)
+	}
+
+	if exponent.Value != "2" {
+		t.Fatalf("expected power exponent value 2, got %q", exponent.Value)
+	}
+}

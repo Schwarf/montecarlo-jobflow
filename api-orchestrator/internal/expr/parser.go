@@ -74,7 +74,7 @@ func (p *Parser) parseExpression() (Expression, error) {
 
 // power is right-associative: 3^4^5 = 3^(4^5)
 func (p *Parser) parsePower() (Expression, error) {
-	left, err := p.parseUnary()
+	left, err := p.parsePrimary()
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (p *Parser) parsePower() (Expression, error) {
 }
 
 func (p *Parser) parseTerm() (Expression, error) {
-	left, err := p.parsePower()
+	left, err := p.parseUnary()
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (p *Parser) parseTerm() (Expression, error) {
 		operator := token.Type
 		p.advance()
 
-		right, err := p.parsePower()
+		right, err := p.parseUnary()
 		if err != nil {
 			return nil, err
 		}
@@ -141,7 +141,7 @@ func (p *Parser) parseUnary() (Expression, error) {
 			Right:    right,
 		}, nil
 	}
-	return p.parsePrimary()
+	return p.parsePower()
 }
 
 func (p *Parser) parsePrimary() (Expression, error) {
