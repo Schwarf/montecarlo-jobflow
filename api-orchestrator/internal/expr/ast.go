@@ -31,8 +31,8 @@ type UnaryExpression struct {
 func (u *UnaryExpression) expressionNode() {}
 
 type FunctionCallExpression struct {
-	Name     string
-	Argument Expression
+	Name      string
+	Arguments []Expression
 }
 
 func (f *FunctionCallExpression) expressionNode() {}

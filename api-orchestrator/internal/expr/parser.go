@@ -158,9 +158,19 @@ func (p *Parser) parsePrimary() (Expression, error) {
 			p.advance() // consume identifier
 			p.advance() // consume '('
 
-			argument, err := p.parseExpression()
-			if err != nil {
-				return nil, err
+			var arguments []Expression
+			if p.current().Type != TokenRightParen {
+				for {
+					argument, err := p.parseExpression()
+					if err != nil {
+						return nil, err
+					}
+					arguments = append(arguments, argument)
+					if p.current().Type != TokenComma {
+						break
+					}
+					p.advance() // consume ','
+				}
 			}
 
 			if p.current().Type != TokenRightParen {
@@ -169,8 +179,8 @@ func (p *Parser) parsePrimary() (Expression, error) {
 			p.advance() // consume ')'
 
 			return &FunctionCallExpression{
-				Name:     functionName,
-				Argument: argument,
+				Name:      functionName,
+				Arguments: arguments,
 			}, nil
 		}
 

@@ -1258,9 +1258,12 @@ func TestParseFunctionCallSimple(t *testing.T) {
 		t.Fatalf("expected function name sin, got %q", callExpr.Name)
 	}
 
-	arg, ok := callExpr.Argument.(*VariableExpression)
+	if len(callExpr.Arguments) != 1 {
+		t.Fatalf("expected 1 argument, got %d", len(callExpr.Arguments))
+	}
+	arg, ok := callExpr.Arguments[0].(*VariableExpression)
 	if !ok {
-		t.Fatalf("expected argument to be *VariableExpression, got %T", callExpr.Argument)
+		t.Fatalf("expected argument to be *VariableExpression, got %T", callExpr.Arguments)
 	}
 
 	if arg.Name != "x" {
@@ -1283,9 +1286,13 @@ func TestParseFunctionCallWithBinaryArgument(t *testing.T) {
 		t.Fatalf("expected function name sin, got %q", callExpr.Name)
 	}
 
-	arg, ok := callExpr.Argument.(*BinaryExpression)
+	if len(callExpr.Arguments) != 1 {
+		t.Fatalf("expected 1 argument, got %d", len(callExpr.Arguments))
+	}
+	arg, ok := callExpr.Arguments[0].(*BinaryExpression)
+
 	if !ok {
-		t.Fatalf("expected argument to be *BinaryExpression, got %T", callExpr.Argument)
+		t.Fatalf("expected argument to be *BinaryExpression, got %T", callExpr.Arguments)
 	}
 
 	if arg.Operator != TokenPlus {
@@ -1376,18 +1383,26 @@ func TestParseNestedFunctionCall(t *testing.T) {
 		t.Fatalf("expected outer function name sin, got %q", outer.Name)
 	}
 
-	inner, ok := outer.Argument.(*FunctionCallExpression)
+	if len(outer.Arguments) != 1 {
+		t.Fatalf("expected 1 argument, got %d", len(outer.Arguments))
+	}
+
+	inner, ok := outer.Arguments[0].(*FunctionCallExpression)
 	if !ok {
-		t.Fatalf("expected outer argument to be *FunctionCallExpression, got %T", outer.Argument)
+		t.Fatalf("expected outer argument to be *FunctionCallExpression, got %T", outer.Arguments)
 	}
 
 	if inner.Name != "cos" {
 		t.Fatalf("expected inner function name cos, got %q", inner.Name)
 	}
 
-	innerArg, ok := inner.Argument.(*VariableExpression)
+	if len(inner.Arguments) != 1 {
+		t.Fatalf("expected 1 argument, got %d", len(inner.Arguments))
+	}
+
+	innerArg, ok := inner.Arguments[0].(*VariableExpression)
 	if !ok {
-		t.Fatalf("expected inner argument to be *VariableExpression, got %T", inner.Argument)
+		t.Fatalf("expected inner argument to be *VariableExpression, got %T", inner.Arguments)
 	}
 
 	if innerArg.Name != "x" {
@@ -1444,9 +1459,13 @@ func TestParseFunctionCallWithComplexArgumentAndOuterPower(t *testing.T) {
 		t.Fatalf("expected outer exponent value 4, got %q", outerExponent.Value)
 	}
 
-	sumTop, ok := callExpr.Argument.(*BinaryExpression)
+	if len(callExpr.Arguments) != 1 {
+		t.Fatalf("expected 1 argument, got %d", len(callExpr.Arguments))
+	}
+
+	sumTop, ok := callExpr.Arguments[0].(*BinaryExpression)
 	if !ok {
-		t.Fatalf("expected function argument to be *BinaryExpression, got %T", callExpr.Argument)
+		t.Fatalf("expected function argument to be *BinaryExpression, got %T", callExpr.Arguments)
 	}
 
 	if sumTop.Operator != TokenPlus {
@@ -1526,13 +1545,6 @@ func TestParseFunctionCallWithComplexArgumentAndOuterPower(t *testing.T) {
 	}
 }
 
-func TestParseFunctionCallEmptyArgument(t *testing.T) {
-	_, err := parseForTest(t, "log()")
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
-}
-
 func TestParseFunctionCallMissingClosingParen(t *testing.T) {
 	_, err := parseForTest(t, "sin(x")
 	if err == nil {
@@ -1601,5 +1613,228 @@ func TestParseUnaryMinusAppliesAfterPower(t *testing.T) {
 
 	if exponent.Value != "2" {
 		t.Fatalf("expected power exponent value 2, got %q", exponent.Value)
+	}
+}
+
+func TestParseFunctionCallTwoArguments(t *testing.T) {
+	expr, err := parseForTest(t, "pow(x,y)")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	callExpr, ok := expr.(*FunctionCallExpression)
+	if !ok {
+		t.Fatalf("expected *FunctionCallExpression, got %T", expr)
+	}
+
+	if callExpr.Name != "pow" {
+		t.Fatalf("expected function name pow, got %q", callExpr.Name)
+	}
+
+	if len(callExpr.Arguments) != 2 {
+		t.Fatalf("expected 2 arguments, got %d", len(callExpr.Arguments))
+	}
+
+	arg0, ok := callExpr.Arguments[0].(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected first argument to be *VariableExpression, got %T", callExpr.Arguments[0])
+	}
+	if arg0.Name != "x" {
+		t.Fatalf("expected first argument name x, got %q", arg0.Name)
+	}
+
+	arg1, ok := callExpr.Arguments[1].(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected second argument to be *VariableExpression, got %T", callExpr.Arguments[1])
+	}
+	if arg1.Name != "y" {
+		t.Fatalf("expected second argument name y, got %q", arg1.Name)
+	}
+}
+
+func TestParseFunctionCallThreeArguments(t *testing.T) {
+	expr, err := parseForTest(t, "min(a,b,c)")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	callExpr, ok := expr.(*FunctionCallExpression)
+	if !ok {
+		t.Fatalf("expected *FunctionCallExpression, got %T", expr)
+	}
+
+	if callExpr.Name != "min" {
+		t.Fatalf("expected function name min, got %q", callExpr.Name)
+	}
+
+	if len(callExpr.Arguments) != 3 {
+		t.Fatalf("expected 3 arguments, got %d", len(callExpr.Arguments))
+	}
+
+	arg0, ok := callExpr.Arguments[0].(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected first argument to be *VariableExpression, got %T", callExpr.Arguments[0])
+	}
+	if arg0.Name != "a" {
+		t.Fatalf("expected first argument name a, got %q", arg0.Name)
+	}
+
+	arg1, ok := callExpr.Arguments[1].(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected second argument to be *VariableExpression, got %T", callExpr.Arguments[1])
+	}
+	if arg1.Name != "b" {
+		t.Fatalf("expected second argument name b, got %q", arg1.Name)
+	}
+
+	arg2, ok := callExpr.Arguments[2].(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected third argument to be *VariableExpression, got %T", callExpr.Arguments[2])
+	}
+	if arg2.Name != "c" {
+		t.Fatalf("expected third argument name c, got %q", arg2.Name)
+	}
+}
+
+func TestParseFunctionCallWithComplexArguments(t *testing.T) {
+	expr, err := parseForTest(t, "f(x+1,2*y,z^2)")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	callExpr, ok := expr.(*FunctionCallExpression)
+	if !ok {
+		t.Fatalf("expected *FunctionCallExpression, got %T", expr)
+	}
+
+	if callExpr.Name != "f" {
+		t.Fatalf("expected function name f, got %q", callExpr.Name)
+	}
+
+	if len(callExpr.Arguments) != 3 {
+		t.Fatalf("expected 3 arguments, got %d", len(callExpr.Arguments))
+	}
+
+	arg0, ok := callExpr.Arguments[0].(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected first argument to be *BinaryExpression, got %T", callExpr.Arguments[0])
+	}
+	if arg0.Operator != TokenPlus {
+		t.Fatalf("expected first argument operator TokenPlus, got %v", arg0.Operator)
+	}
+
+	arg1, ok := callExpr.Arguments[1].(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected second argument to be *BinaryExpression, got %T", callExpr.Arguments[1])
+	}
+	if arg1.Operator != TokenMultiply {
+		t.Fatalf("expected second argument operator TokenMultiply, got %v", arg1.Operator)
+	}
+
+	arg2, ok := callExpr.Arguments[2].(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected third argument to be *BinaryExpression, got %T", callExpr.Arguments[2])
+	}
+	if arg2.Operator != TokenPower {
+		t.Fatalf("expected third argument operator TokenPower, got %v", arg2.Operator)
+	}
+}
+
+func TestParseNestedFunctionCallMultipleArguments(t *testing.T) {
+	expr, err := parseForTest(t, "max(sin(x),pow(y,2))")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	callExpr, ok := expr.(*FunctionCallExpression)
+	if !ok {
+		t.Fatalf("expected *FunctionCallExpression, got %T", expr)
+	}
+
+	if callExpr.Name != "max" {
+		t.Fatalf("expected function name max, got %q", callExpr.Name)
+	}
+
+	if len(callExpr.Arguments) != 2 {
+		t.Fatalf("expected 2 arguments, got %d", len(callExpr.Arguments))
+	}
+
+	arg0, ok := callExpr.Arguments[0].(*FunctionCallExpression)
+	if !ok {
+		t.Fatalf("expected first argument to be *FunctionCallExpression, got %T", callExpr.Arguments[0])
+	}
+	if arg0.Name != "sin" {
+		t.Fatalf("expected first nested function name sin, got %q", arg0.Name)
+	}
+
+	if len(arg0.Arguments) != 1 {
+		t.Fatalf("expected sin to have 1 argument, got %d", len(arg0.Arguments))
+	}
+
+	arg1, ok := callExpr.Arguments[1].(*FunctionCallExpression)
+	if !ok {
+		t.Fatalf("expected second argument to be *FunctionCallExpression, got %T", callExpr.Arguments[1])
+	}
+	if arg1.Name != "pow" {
+		t.Fatalf("expected second nested function name pow, got %q", arg1.Name)
+	}
+
+	if len(arg1.Arguments) != 2 {
+		t.Fatalf("expected pow to have 2 arguments, got %d", len(arg1.Arguments))
+	}
+}
+
+func TestParseFunctionCallNoArguments(t *testing.T) {
+	expr, err := parseForTest(t, "f()")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	callExpr, ok := expr.(*FunctionCallExpression)
+	if !ok {
+		t.Fatalf("expected *FunctionCallExpression, got %T", expr)
+	}
+
+	if callExpr.Name != "f" {
+		t.Fatalf("expected function name f, got %q", callExpr.Name)
+	}
+
+	if len(callExpr.Arguments) != 0 {
+		t.Fatalf("expected 0 arguments, got %d", len(callExpr.Arguments))
+	}
+}
+
+func TestParseFunctionCallMissingArgumentBetweenCommas(t *testing.T) {
+	_, err := parseForTest(t, "f(x,,y)")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestParseFunctionCallLeadingComma(t *testing.T) {
+	_, err := parseForTest(t, "f(,x)")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestParseFunctionCallTrailingComma(t *testing.T) {
+	_, err := parseForTest(t, "f(x,)")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestParseFunctionCallOnlyComma(t *testing.T) {
+	_, err := parseForTest(t, "f(,)")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestParseFunctionCallMissingClosingParenAfterMultipleArguments(t *testing.T) {
+	_, err := parseForTest(t, "f(x,y")
+	if err == nil {
+		t.Fatal("expected error, got nil")
 	}
 }
