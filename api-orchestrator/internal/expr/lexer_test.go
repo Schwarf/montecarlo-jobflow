@@ -304,3 +304,44 @@ func TestLexer_Number_ScientificNotation(t *testing.T) {
 		t.Fatalf("got lexeme %q, want %q", tokens[0].Lexeme, "4.567E+8")
 	}
 }
+
+func TestLexerInvalidCharacter(t *testing.T) {
+	_, err := LexAll("@")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	_, err = LexAll("!")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	_, err = LexAll(">")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	_, err = LexAll("{}")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	_, err = LexAll("]")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestLexerInvalidDot(t *testing.T) {
+	_, err := LexAll(".")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestLexerInvalidScientificNotation(t *testing.T) {
+	_, err := LexAll("1e")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
