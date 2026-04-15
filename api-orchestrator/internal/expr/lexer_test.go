@@ -17,7 +17,7 @@ func collectLexemes(tokens []Token) []string {
 	return result
 }
 
-func TestLexer_SingleIdentifier(t *testing.T) {
+func TestLexerSingleIdentifier(t *testing.T) {
 	tokens, err := LexAll("x")
 	if err != nil {
 		t.Fatalf("lexAll returned error: %v", err)
@@ -40,7 +40,7 @@ func TestLexer_SingleIdentifier(t *testing.T) {
 	}
 }
 
-func TestLexer_BasicOperators(t *testing.T) {
+func TestLexerBasicOperators(t *testing.T) {
 	tokens, err := LexAll("-z+x+y*z/2^a_1")
 	if err != nil {
 		t.Fatalf("LexAll returned error: %v", err)
@@ -96,7 +96,7 @@ func TestLexer_BasicOperators(t *testing.T) {
 
 }
 
-func TestLexer_ParenthesesAndUnaryMinus(t *testing.T) {
+func TestLexerParenthesesAndUnaryMinus(t *testing.T) {
 	tokens, err := LexAll("x^(-4/3)")
 	if err != nil {
 		t.Fatalf("lexAll returned error: %v", err)
@@ -145,7 +145,7 @@ func TestLexer_ParenthesesAndUnaryMinus(t *testing.T) {
 	}
 }
 
-func TestLexer_FunctionCall(t *testing.T) {
+func TestLexerFunctionCall(t *testing.T) {
 	tokens, err := LexAll("sin(x)")
 	if err != nil {
 		t.Fatalf("lexAll returned error: %v", err)
@@ -186,7 +186,7 @@ func TestLexer_FunctionCall(t *testing.T) {
 
 }
 
-func TestLexer_WhitespaceIsIgnored(t *testing.T) {
+func TestLexerWhitespaceIsIgnored(t *testing.T) {
 	tokens, err := LexAll("  \t x  +   y \n ")
 	if err != nil {
 		t.Fatalf("lexAll returned error: %v", err)
@@ -208,5 +208,99 @@ func TestLexer_WhitespaceIsIgnored(t *testing.T) {
 		if got[i] != want[i] {
 			t.Fatalf("token %d mismatch: got %v, want %v", i, got[i], want[i])
 		}
+	}
+}
+
+func TestLexer_Number_Integer(t *testing.T) {
+	tokens, err := LexAll("42")
+	if err != nil {
+		t.Fatalf("lexAll returned error: %v", err)
+	}
+
+	if len(tokens) != 2 {
+		t.Fatalf("token count mismatch: got %d, want %d", len(tokens), 2)
+	}
+
+	if tokens[0].Type != TokenNumber {
+		t.Fatalf("got token type %v, want %v", tokens[0].Type, TokenNumber)
+	}
+
+	if tokens[0].Lexeme != "42" {
+		t.Fatalf("got lexeme %q, want %q", tokens[0].Lexeme, "42")
+	}
+}
+
+func TestLexer_Number_Decimal(t *testing.T) {
+	tokens, err := LexAll("3.1415")
+	if err != nil {
+		t.Fatalf("lexAll returned error: %v", err)
+	}
+
+	if len(tokens) != 2 {
+		t.Fatalf("token count mismatch: got %d, want %d", len(tokens), 2)
+	}
+
+	if tokens[0].Type != TokenNumber {
+		t.Fatalf("got token type %v, want %v", tokens[0].Type, TokenNumber)
+	}
+
+	if tokens[0].Lexeme != "3.1415" {
+		t.Fatalf("got lexeme %q, want %q", tokens[0].Lexeme, "3.1415")
+	}
+}
+
+func TestLexer_Number_LeadingDot(t *testing.T) {
+	tokens, err := LexAll(".5")
+	if err != nil {
+		t.Fatalf("lexAll returned error: %v", err)
+	}
+
+	if len(tokens) != 2 {
+		t.Fatalf("token count mismatch: got %d, want %d", len(tokens), 2)
+	}
+
+	if tokens[0].Type != TokenNumber {
+		t.Fatalf("got token type %v, want %v", tokens[0].Type, TokenNumber)
+	}
+
+	if tokens[0].Lexeme != ".5" {
+		t.Fatalf("got lexeme %q, want %q", tokens[0].Lexeme, ".5")
+	}
+}
+
+func TestLexer_Number_ScientificNotation(t *testing.T) {
+	tokens, err := LexAll("1.2e-3")
+	if err != nil {
+		t.Fatalf("lexAll returned error: %v", err)
+	}
+
+	if len(tokens) != 2 {
+		t.Fatalf("token count mismatch: got %d, want %d", len(tokens), 2)
+	}
+
+	if tokens[0].Type != TokenNumber {
+		t.Fatalf("got token type %v, want %v", tokens[0].Type, TokenNumber)
+	}
+
+	if tokens[0].Lexeme != "1.2e-3" {
+		t.Fatalf("got lexeme %q, want %q", tokens[0].Lexeme, "1.2e-3")
+	}
+
+	// Other version of exponents
+	tokens, err = LexAll("4.567E+8")
+	if err != nil {
+		t.Fatalf("lexAll returned error: %v", err)
+	}
+
+	if len(tokens) != 2 {
+		t.Fatalf("token count mismatch: got %d, want %d", len(tokens), 2)
+	}
+
+	if tokens[0].Type != TokenNumber {
+		t.Fatalf("got token type %v, want %v", tokens[0].Type, TokenNumber)
+	}
+
+	if tokens[0].Lexeme != "4.567E+8" {
+		t.Fatalf("got lexeme %q, want %q", tokens[0].Lexeme, "4.567E+8")
 	}
 }
