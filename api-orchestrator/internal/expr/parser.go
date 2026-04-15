@@ -73,7 +73,7 @@ func (p *Parser) parseExpression() (Expression, error) {
 }
 
 func (p *Parser) parseTerm() (Expression, error) {
-	left, err := p.parsePrimary()
+	left, err := p.parseUnary()
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func (p *Parser) parseTerm() (Expression, error) {
 		operator := token.Type
 		p.advance()
 
-		right, err := p.parsePrimary()
+		right, err := p.parseUnary()
 		if err != nil {
 			return nil, err
 		}
@@ -98,6 +98,25 @@ func (p *Parser) parseTerm() (Expression, error) {
 		}
 	}
 	return left, nil
+}
+
+func (p *Parser) parseUnary() (Expression, error) {
+	token := p.current()
+
+	if token.Type == TokenPlus || token.Type == TokenMinus {
+		operator := token.Type
+		p.advance()
+		right, err := p.parseUnary()
+		if err != nil {
+			return nil, err
+		}
+
+		return &UnaryExpression{
+			Operator: operator,
+			Right:    right,
+		}, nil
+	}
+	return p.parsePrimary()
 }
 
 func (p *Parser) parsePrimary() (Expression, error) {

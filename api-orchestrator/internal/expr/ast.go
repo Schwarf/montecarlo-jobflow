@@ -22,3 +22,10 @@ type BinaryExpression struct {
 }
 
 func (b *BinaryExpression) expressionNode() {}
+
+type UnaryExpression struct {
+	Operator TokenType
+	Right    Expression
+}
+
+func (u *UnaryExpression) expressionNode() {}
