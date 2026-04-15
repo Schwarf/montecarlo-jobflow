@@ -950,3 +950,295 @@ func TestParseMultiplyByUnaryPlus(t *testing.T) {
 		t.Fatalf("expected unary operator TokenPlus, got %v", right.Operator)
 	}
 }
+
+func TestParsePowerSimple(t *testing.T) {
+	expr, err := parseForTest(t, "2^3")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	binaryExpr, ok := expr.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected *BinaryExpression, got %T", expr)
+	}
+
+	if binaryExpr.Operator != TokenPower {
+		t.Fatalf("expected operator TokenPower, got %v", binaryExpr.Operator)
+	}
+
+	left, ok := binaryExpr.Left.(*NumberExpression)
+	if !ok {
+		t.Fatalf("expected left to be *NumberExpression, got %T", binaryExpr.Left)
+	}
+	if left.Value != "2" {
+		t.Fatalf("expected left value 2, got %q", left.Value)
+	}
+
+	right, ok := binaryExpr.Right.(*NumberExpression)
+	if !ok {
+		t.Fatalf("expected right to be *NumberExpression, got %T", binaryExpr.Right)
+	}
+	if right.Value != "3" {
+		t.Fatalf("expected right value 3, got %q", right.Value)
+	}
+}
+
+func TestParsePowerRightAssociative(t *testing.T) {
+	expr, err := parseForTest(t, "2^3^4")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	outer, ok := expr.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected outer to be *BinaryExpression, got %T", expr)
+	}
+
+	if outer.Operator != TokenPower {
+		t.Fatalf("expected outer operator TokenPower, got %v", outer.Operator)
+	}
+
+	left, ok := outer.Left.(*NumberExpression)
+	if !ok {
+		t.Fatalf("expected outer left to be *NumberExpression, got %T", outer.Left)
+	}
+	if left.Value != "2" {
+		t.Fatalf("expected outer left value 2, got %q", left.Value)
+	}
+
+	right, ok := outer.Right.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected outer right to be *BinaryExpression, got %T", outer.Right)
+	}
+
+	if right.Operator != TokenPower {
+		t.Fatalf("expected inner operator TokenPower, got %v", right.Operator)
+	}
+
+	innerLeft, ok := right.Left.(*NumberExpression)
+	if !ok {
+		t.Fatalf("expected inner left to be *NumberExpression, got %T", right.Left)
+	}
+	if innerLeft.Value != "3" {
+		t.Fatalf("expected inner left value 3, got %q", innerLeft.Value)
+	}
+
+	innerRight, ok := right.Right.(*NumberExpression)
+	if !ok {
+		t.Fatalf("expected inner right to be *NumberExpression, got %T", right.Right)
+	}
+	if innerRight.Value != "4" {
+		t.Fatalf("expected inner right value 4, got %q", innerRight.Value)
+	}
+}
+
+func TestParseMultiplyWithPowerPrecedence(t *testing.T) {
+	expr, err := parseForTest(t, "2*3^4")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	outer, ok := expr.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected outer to be *BinaryExpression, got %T", expr)
+	}
+
+	if outer.Operator != TokenMultiply {
+		t.Fatalf("expected outer operator TokenMultiply, got %v", outer.Operator)
+	}
+
+	left, ok := outer.Left.(*NumberExpression)
+	if !ok {
+		t.Fatalf("expected outer left to be *NumberExpression, got %T", outer.Left)
+	}
+	if left.Value != "2" {
+		t.Fatalf("expected outer left value 2, got %q", left.Value)
+	}
+
+	right, ok := outer.Right.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected outer right to be *BinaryExpression, got %T", outer.Right)
+	}
+
+	if right.Operator != TokenPower {
+		t.Fatalf("expected right operator TokenPower, got %v", right.Operator)
+	}
+}
+
+func TestParsePowerBeforeMultiply(t *testing.T) {
+	expr, err := parseForTest(t, "2^3*4")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	outer, ok := expr.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected outer to be *BinaryExpression, got %T", expr)
+	}
+
+	if outer.Operator != TokenMultiply {
+		t.Fatalf("expected outer operator TokenMultiply, got %v", outer.Operator)
+	}
+
+	left, ok := outer.Left.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected outer left to be *BinaryExpression, got %T", outer.Left)
+	}
+
+	if left.Operator != TokenPower {
+		t.Fatalf("expected left operator TokenPower, got %v", left.Operator)
+	}
+
+	right, ok := outer.Right.(*NumberExpression)
+	if !ok {
+		t.Fatalf("expected outer right to be *NumberExpression, got %T", outer.Right)
+	}
+	if right.Value != "4" {
+		t.Fatalf("expected outer right value 4, got %q", right.Value)
+	}
+}
+
+func TestParsePowerWithParenthesizedExponent(t *testing.T) {
+	expr, err := parseForTest(t, "x^(-4/3)")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	outer, ok := expr.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected outer to be *BinaryExpression, got %T", expr)
+	}
+
+	if outer.Operator != TokenPower {
+		t.Fatalf("expected operator TokenPower, got %v", outer.Operator)
+	}
+
+	left, ok := outer.Left.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected left to be *VariableExpression, got %T", outer.Left)
+	}
+	if left.Name != "x" {
+		t.Fatalf("expected variable name x, got %q", left.Name)
+	}
+
+	right, ok := outer.Right.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected right to be *BinaryExpression, got %T", outer.Right)
+	}
+
+	if right.Operator != TokenDivide {
+		t.Fatalf("expected exponent operator TokenDivide, got %v", right.Operator)
+	}
+
+	rightLeft, ok := right.Left.(*UnaryExpression)
+	if !ok {
+		t.Fatalf("expected exponent left to be *UnaryExpression, got %T", right.Left)
+	}
+	if rightLeft.Operator != TokenMinus {
+		t.Fatalf("expected unary minus in exponent left, got %v", rightLeft.Operator)
+	}
+
+	rightLeftNumber, ok := rightLeft.Right.(*NumberExpression)
+	if !ok {
+		t.Fatalf("expected unary right to be *NumberExpression, got %T", rightLeft.Right)
+	}
+	if rightLeftNumber.Value != "4" {
+		t.Fatalf("expected unary right value 4, got %q", rightLeftNumber.Value)
+	}
+
+	rightRight, ok := right.Right.(*NumberExpression)
+	if !ok {
+		t.Fatalf("expected exponent right to be *NumberExpression, got %T", right.Right)
+	}
+	if rightRight.Value != "3" {
+		t.Fatalf("expected exponent right value 3, got %q", rightRight.Value)
+	}
+}
+
+func TestParsePowerWithParenthesizedBase(t *testing.T) {
+	expr, err := parseForTest(t, "(a+b)^c")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	outer, ok := expr.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected outer to be *BinaryExpression, got %T", expr)
+	}
+
+	if outer.Operator != TokenPower {
+		t.Fatalf("expected operator TokenPower, got %v", outer.Operator)
+	}
+
+	left, ok := outer.Left.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected left to be *BinaryExpression, got %T", outer.Left)
+	}
+	if left.Operator != TokenPlus {
+		t.Fatalf("expected left operator TokenPlus, got %v", left.Operator)
+	}
+
+	right, ok := outer.Right.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected right to be *VariableExpression, got %T", outer.Right)
+	}
+	if right.Name != "c" {
+		t.Fatalf("expected variable name c, got %q", right.Name)
+	}
+}
+
+func TestParsePowerMissingRightOperand(t *testing.T) {
+	_, err := parseForTest(t, "2^")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestParsePowerMissingLeftOperand(t *testing.T) {
+	_, err := parseForTest(t, "^2")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestParsePowerMissingExponentAfterUnaryMinus(t *testing.T) {
+	_, err := parseForTest(t, "2^-")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestParsePowerEmptyParenthesizedExponent(t *testing.T) {
+	_, err := parseForTest(t, "x^()")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestParsePowerMissingClosingParenInExponent(t *testing.T) {
+	_, err := parseForTest(t, "x^(-4/3")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestParsePowerUnexpectedTokenAfterExponent(t *testing.T) {
+	_, err := parseForTest(t, "2^3)")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestParsePowerDoubleOperator(t *testing.T) {
+	_, err := parseForTest(t, "2^^3")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestParsePowerOperatorWithoutValidRightSide(t *testing.T) {
+	_, err := parseForTest(t, "2^*3")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
