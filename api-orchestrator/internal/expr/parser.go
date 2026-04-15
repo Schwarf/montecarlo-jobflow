@@ -44,7 +44,7 @@ func (p *Parser) Parse() (Expression, error) {
 }
 
 func (p *Parser) parseExpression() (Expression, error) {
-	left, err := p.parsePrimary()
+	left, err := p.parseTerm()
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (p *Parser) parseExpression() (Expression, error) {
 		operator := token.Type
 		p.advance()
 
-		right, err := p.parsePrimary()
+		right, err := p.parseTerm()
 		if err != nil {
 			return nil, err
 		}
@@ -69,6 +69,34 @@ func (p *Parser) parseExpression() (Expression, error) {
 		}
 	}
 
+	return left, nil
+}
+
+func (p *Parser) parseTerm() (Expression, error) {
+	left, err := p.parsePrimary()
+	if err != nil {
+		return nil, err
+	}
+
+	for {
+		token := p.current()
+		if token.Type != TokenMultiply && token.Type != TokenDivide {
+			break
+		}
+		operator := token.Type
+		p.advance()
+
+		right, err := p.parsePrimary()
+		if err != nil {
+			return nil, err
+		}
+
+		left = &BinaryExpression{
+			Left:     left,
+			Operator: operator,
+			Right:    right,
+		}
+	}
 	return left, nil
 }
 
