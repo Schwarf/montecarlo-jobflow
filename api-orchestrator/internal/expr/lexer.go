@@ -1,6 +1,7 @@
 package expr
 
 import (
+	"fmt"
 	"unicode"
 )
 
@@ -19,7 +20,7 @@ func NewLexer(input []rune) *Lexer {
 func (l *Lexer) NextToken() (Token, error) {
 	l.skipWhitespace()
 
-	if l.pos > -len(l.input) {
+	if l.pos > len(l.input) {
 		return Token{
 			Type:   TokenEOF,
 			Lexeme: "",
@@ -59,9 +60,75 @@ func (l *Lexer) NextToken() (Token, error) {
 	return Token{Type: TokenEOF, Lexeme: ""}, nil
 }
 
-func (l *Lexer) skipWhitespace() {
-	if l.pos < len(l.input) && unicode.IsSpace(l.input[l.pos]) {
+func (l *Lexer) readNumber() (Token, error) {
+	start := l.pos
+	seenDot := false
+
+	if l.input[l.pos] == '.' {
+		seenDot = true
 		l.pos++
+		if l.pos >= len(l.input) || !isDigit(l.input[l.pos]) {
+			return Token{}, fmt.Errorf("invalid number at position %d", start)
+		}
+	}
+
+	for l.pos < len(l.input) {
+		char := l.input[l.pos]
+
+		if isDigit(char) {
+			l.pos++
+			continue
+		}
+
+		if char == '.' {
+			if seenDot {
+				break
+			}
+			seenDot = true
+			l.pos++
+			continue
+		}
+		break
+	}
+
+	if l.pos < len(l.input) && (l.input[l.pos] == 'e' || l.input[l.pos] == 'E') {
+		expPos := l.pos
+		l.pos++
+
+		if l.pos < len(l.input) && (l.input[l.pos] == '+' || l.input[l.pos] == '-') {
+			l.pos++
+		}
+
+		if l.pos >= len(l.input) || !isDigit(l.input[l.pos]) {
+			return Token{}, fmt.Errorf("invalid scientific notation at position %d", expPos)
+		}
+
+		for l.pos < len(l.input) && isDigit(l.input[l.pos]) {
+			l.pos++
+		}
+	}
+	return Token{Type: TokenNumber, Lexeme: string(l.input[start:l.pos]), Pos: start}, nil
+
+}
+
+func (l *Lexer) skipWhitespace() {
+	for l.pos < len(l.input) && unicode.IsSpace(l.input[l.pos]) {
+		l.pos++
+	}
+}
+
+func (l *Lexer) readIdentifier() Token {
+	start := l.pos
+	l.pos++
+
+	for l.pos < len(l.input) && isIdentifierPart(l.input[l.pos]) {
+		l.pos++
+	}
+
+	return Token{
+		Type:   TokenIdentifier,
+		Lexeme: string(l.input[start:l.pos]),
+		Pos:    start,
 	}
 }
 
