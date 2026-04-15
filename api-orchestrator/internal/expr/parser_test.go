@@ -1838,3 +1838,255 @@ func TestParseFunctionCallMissingClosingParenAfterMultipleArguments(t *testing.T
 		t.Fatal("expected error, got nil")
 	}
 }
+
+func TestParseParenthesizedNegativeBasePower(t *testing.T) {
+	expr, err := parseForTest(t, "(-x)^2")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	powerExpr, ok := expr.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected *BinaryExpression, got %T", expr)
+	}
+
+	if powerExpr.Operator != TokenPower {
+		t.Fatalf("expected operator TokenPower, got %v", powerExpr.Operator)
+	}
+
+	base, ok := powerExpr.Left.(*UnaryExpression)
+	if !ok {
+		t.Fatalf("expected power base to be *UnaryExpression, got %T", powerExpr.Left)
+	}
+
+	if base.Operator != TokenMinus {
+		t.Fatalf("expected unary operator TokenMinus, got %v", base.Operator)
+	}
+
+	baseVar, ok := base.Right.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected unary right to be *VariableExpression, got %T", base.Right)
+	}
+
+	if baseVar.Name != "x" {
+		t.Fatalf("expected variable name x, got %q", baseVar.Name)
+	}
+
+	exponent, ok := powerExpr.Right.(*NumberExpression)
+	if !ok {
+		t.Fatalf("expected power exponent to be *NumberExpression, got %T", powerExpr.Right)
+	}
+
+	if exponent.Value != "2" {
+		t.Fatalf("expected exponent value 2, got %q", exponent.Value)
+	}
+}
+
+func TestParseFullOperatorPrecedenceChain(t *testing.T) {
+	expr, err := parseForTest(t, "a+b*c^d-e/f")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	root, ok := expr.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected root to be *BinaryExpression, got %T", expr)
+	}
+
+	if root.Operator != TokenMinus {
+		t.Fatalf("expected root operator TokenMinus, got %v", root.Operator)
+	}
+
+	left, ok := root.Left.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected root.Left to be *BinaryExpression, got %T", root.Left)
+	}
+
+	if left.Operator != TokenPlus {
+		t.Fatalf("expected left operator TokenPlus, got %v", left.Operator)
+	}
+
+	leftLeft, ok := left.Left.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected left.Left to be *VariableExpression, got %T", left.Left)
+	}
+
+	if leftLeft.Name != "a" {
+		t.Fatalf("expected left.Left name a, got %q", leftLeft.Name)
+	}
+
+	leftRight, ok := left.Right.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected left.Right to be *BinaryExpression, got %T", left.Right)
+	}
+
+	if leftRight.Operator != TokenMultiply {
+		t.Fatalf("expected left.Right operator TokenMultiply, got %v", leftRight.Operator)
+	}
+
+	mulLeft, ok := leftRight.Left.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected multiply left to be *VariableExpression, got %T", leftRight.Left)
+	}
+
+	if mulLeft.Name != "b" {
+		t.Fatalf("expected multiply left name b, got %q", mulLeft.Name)
+	}
+
+	mulRight, ok := leftRight.Right.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected multiply right to be *BinaryExpression, got %T", leftRight.Right)
+	}
+
+	if mulRight.Operator != TokenPower {
+		t.Fatalf("expected multiply right operator TokenPower, got %v", mulRight.Operator)
+	}
+
+	powerLeft, ok := mulRight.Left.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected power left to be *VariableExpression, got %T", mulRight.Left)
+	}
+
+	if powerLeft.Name != "c" {
+		t.Fatalf("expected power left name c, got %q", powerLeft.Name)
+	}
+
+	powerRight, ok := mulRight.Right.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected power right to be *VariableExpression, got %T", mulRight.Right)
+	}
+
+	if powerRight.Name != "d" {
+		t.Fatalf("expected power right name d, got %q", powerRight.Name)
+	}
+
+	right, ok := root.Right.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected root.Right to be *BinaryExpression, got %T", root.Right)
+	}
+
+	if right.Operator != TokenDivide {
+		t.Fatalf("expected right operator TokenDivide, got %v", right.Operator)
+	}
+
+	divLeft, ok := right.Left.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected divide left to be *VariableExpression, got %T", right.Left)
+	}
+
+	if divLeft.Name != "e" {
+		t.Fatalf("expected divide left name e, got %q", divLeft.Name)
+	}
+
+	divRight, ok := right.Right.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected divide right to be *VariableExpression, got %T", right.Right)
+	}
+
+	if divRight.Name != "f" {
+		t.Fatalf("expected divide right name f, got %q", divRight.Name)
+	}
+}
+
+func TestParseUnaryMinusFunctionCallPower(t *testing.T) {
+	expr, err := parseForTest(t, "-f(x,y)^z")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	unaryExpr, ok := expr.(*UnaryExpression)
+	if !ok {
+		t.Fatalf("expected *UnaryExpression, got %T", expr)
+	}
+
+	if unaryExpr.Operator != TokenMinus {
+		t.Fatalf("expected unary operator TokenMinus, got %v", unaryExpr.Operator)
+	}
+
+	powerExpr, ok := unaryExpr.Right.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected unary right to be *BinaryExpression, got %T", unaryExpr.Right)
+	}
+
+	if powerExpr.Operator != TokenPower {
+		t.Fatalf("expected power operator TokenPower, got %v", powerExpr.Operator)
+	}
+
+	callExpr, ok := powerExpr.Left.(*FunctionCallExpression)
+	if !ok {
+		t.Fatalf("expected power base to be *FunctionCallExpression, got %T", powerExpr.Left)
+	}
+
+	if callExpr.Name != "f" {
+		t.Fatalf("expected function name f, got %q", callExpr.Name)
+	}
+
+	if len(callExpr.Arguments) != 2 {
+		t.Fatalf("expected 2 function arguments, got %d", len(callExpr.Arguments))
+	}
+
+	arg0, ok := callExpr.Arguments[0].(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected first argument to be *VariableExpression, got %T", callExpr.Arguments[0])
+	}
+
+	if arg0.Name != "x" {
+		t.Fatalf("expected first argument name x, got %q", arg0.Name)
+	}
+
+	arg1, ok := callExpr.Arguments[1].(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected second argument to be *VariableExpression, got %T", callExpr.Arguments[1])
+	}
+
+	if arg1.Name != "y" {
+		t.Fatalf("expected second argument name y, got %q", arg1.Name)
+	}
+
+	exponent, ok := powerExpr.Right.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected exponent to be *VariableExpression, got %T", powerExpr.Right)
+	}
+
+	if exponent.Name != "z" {
+		t.Fatalf("expected exponent name z, got %q", exponent.Name)
+	}
+}
+
+func TestParseFunctionCallWithWhitespaceAroundArguments(t *testing.T) {
+	expr, err := parseForTest(t, "pow( x , y )")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	callExpr, ok := expr.(*FunctionCallExpression)
+	if !ok {
+		t.Fatalf("expected *FunctionCallExpression, got %T", expr)
+	}
+
+	if callExpr.Name != "pow" {
+		t.Fatalf("expected function name pow, got %q", callExpr.Name)
+	}
+
+	if len(callExpr.Arguments) != 2 {
+		t.Fatalf("expected 2 arguments, got %d", len(callExpr.Arguments))
+	}
+
+	arg0, ok := callExpr.Arguments[0].(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected first argument to be *VariableExpression, got %T", callExpr.Arguments[0])
+	}
+
+	if arg0.Name != "x" {
+		t.Fatalf("expected first argument name x, got %q", arg0.Name)
+	}
+
+	arg1, ok := callExpr.Arguments[1].(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected second argument to be *VariableExpression, got %T", callExpr.Arguments[1])
+	}
+
+	if arg1.Name != "y" {
+		t.Fatalf("expected second argument name y, got %q", arg1.Name)
+	}
+}
