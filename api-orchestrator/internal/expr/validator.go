@@ -62,6 +62,11 @@ func validateExpr(expr Expression, context ValidationContext, errors *[]Validati
 				Message: fmt.Sprintf("unknown function %q", e.Name),
 			})
 		}
+		if len(e.Arguments) == 0 {
+			*errors = append(*errors, ValidationError{
+				Message: fmt.Sprintf("function %q requires at least one argument", e.Name),
+			})
+		}
 		for _, arg := range e.Arguments {
 			validateExpr(arg, context, errors)
 		}

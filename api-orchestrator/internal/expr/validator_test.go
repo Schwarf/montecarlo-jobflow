@@ -110,3 +110,15 @@ func TestValidateUnknownExpression(t *testing.T) {
 		t.Fatalf("expected 1 error, got %d", len(errors))
 	}
 }
+
+func TestValidateFunctionCallWithoutArguments(t *testing.T) {
+	expr := &FunctionCallExpression{
+		Name:      "sin",
+		Arguments: nil,
+	}
+
+	errors := Validate(expr)
+	if len(errors) != 1 {
+		t.Fatalf("expected 1 error, got %d", len(errors))
+	}
+}
