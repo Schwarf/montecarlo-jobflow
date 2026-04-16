@@ -7,29 +7,29 @@ type ValidationError struct {
 }
 
 type ValidationContext struct {
-	AllowedFunctions map[string]struct{}
+	AllowedFunctions map[string]int
 	AllowedConstants map[string]struct{}
 }
 
 func DefaultValidationContext() ValidationContext {
 	return ValidationContext{
-		AllowedFunctions: map[string]struct{}{
-			"sin":   {},
-			"cos":   {},
-			"tan":   {},
-			"asin":  {},
-			"acos":  {},
-			"atan":  {},
-			"sinh":  {},
-			"cosh":  {},
-			"tanh":  {},
-			"asinh": {},
-			"acosh": {},
-			"atanh": {},
-			"log10": {},
-			"ln":    {},
-			"log2":  {},
-			"exp":   {},
+		AllowedFunctions: map[string]int{
+			"sin":   1,
+			"cos":   1,
+			"tan":   1,
+			"asin":  1,
+			"acos":  1,
+			"atan":  1,
+			"sinh":  1,
+			"cosh":  1,
+			"tanh":  1,
+			"asinh": 1,
+			"acosh": 1,
+			"atanh": 1,
+			"log10": 1,
+			"ln":    1,
+			"log2":  1,
+			"exp":   1,
 		},
 		AllowedConstants: map[string]struct{}{
 			"Pi": {},
@@ -57,14 +57,14 @@ func validateExpr(expr Expression, context ValidationContext, errors *[]Validati
 		validateExpr(e.Left, context, errors)
 		validateExpr(e.Right, context, errors)
 	case *FunctionCallExpression:
-		if _, ok := context.AllowedFunctions[e.Name]; !ok {
+		expectedArgCount, ok := context.AllowedFunctions[e.Name]
+		if !ok {
 			*errors = append(*errors, ValidationError{
 				Message: fmt.Sprintf("unknown function %q", e.Name),
 			})
-		}
-		if len(e.Arguments) == 0 {
+		} else if len(e.Arguments) != expectedArgCount {
 			*errors = append(*errors, ValidationError{
-				Message: fmt.Sprintf("function %q requires at least one argument", e.Name),
+				Message: fmt.Sprintf("function %q expects %d argument(s), got %d", e.Name, expectedArgCount, len(e.Arguments)),
 			})
 		}
 		for _, arg := range e.Arguments {

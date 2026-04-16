@@ -122,3 +122,22 @@ func TestValidateFunctionCallWithoutArguments(t *testing.T) {
 		t.Fatalf("expected 1 error, got %d", len(errors))
 	}
 }
+
+func TestValidateFunctionCallWithTooManyArguments(t *testing.T) {
+	expr := &FunctionCallExpression{
+		Name: "cosh",
+		Arguments: []Expression{
+			&VariableExpression{Name: "x"},
+			&VariableExpression{Name: "y"},
+		},
+	}
+
+	errors := Validate(expr)
+	if len(errors) != 1 {
+		t.Fatalf("expected 1 error, got %d", len(errors))
+	}
+
+	if errors[0].Message == "" {
+		t.Fatal("expected non-empty error message")
+	}
+}
