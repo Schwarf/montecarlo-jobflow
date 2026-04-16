@@ -45,7 +45,7 @@ func TestValidateBinaryExpression(t *testing.T) {
 	}
 }
 
-func TestValidateFunctionCallExpression(t *testing.T) {
+func TestValidateKnownFunction(t *testing.T) {
 	expr := &FunctionCallExpression{
 		Name: "sin",
 		Arguments: []Expression{
@@ -56,6 +56,20 @@ func TestValidateFunctionCallExpression(t *testing.T) {
 	errors := Validate(expr)
 	if len(errors) != 0 {
 		t.Fatalf("expected no errors, got %d", len(errors))
+	}
+}
+
+func TestValidateUnknownFunction(t *testing.T) {
+	expr := &FunctionCallExpression{
+		Name: "foo",
+		Arguments: []Expression{
+			&VariableExpression{Name: "x"},
+		},
+	}
+
+	errors := Validate(expr)
+	if len(errors) != 1 {
+		t.Fatalf("expected 1 error, got %d", len(errors))
 	}
 }
 
