@@ -8,7 +8,8 @@ type ValidationError struct {
 
 type ValidationContext struct {
 	AllowedFunctions map[string]int
-	AllowedConstants map[string]struct{}
+	BuiltInConstants map[string]struct{}
+	UserVariables    map[string]struct{}
 }
 
 func DefaultValidationContext() ValidationContext {
@@ -31,15 +32,14 @@ func DefaultValidationContext() ValidationContext {
 			"log2":  1,
 			"exp":   1,
 		},
-		AllowedConstants: map[string]struct{}{
+		BuiltInConstants: map[string]struct{}{
 			"Pi": {},
 			"E":  {},
 		},
 	}
 }
 
-func Validate(expr Expression) []ValidationError {
-	context := DefaultValidationContext()
+func Validate(expr Expression, context ValidationContext) []ValidationError {
 	var errors []ValidationError
 	validateExpr(expr, context, &errors)
 	return errors
@@ -50,7 +50,16 @@ func validateExpr(expr Expression, context ValidationContext, errors *[]Validati
 	case *NumberExpression:
 		return
 	case *VariableExpression:
-		return
+		if _, ok := context.BuiltInConstants[e.Name]; ok {
+			return
+		}
+		if _, ok := context.UserVariables[e.Name]; ok {
+			return
+		}
+
+		*errors = append(*errors, ValidationError{
+			Message: fmt.Sprintf("unknown identifier %q", e.Name),
+		})
 	case *UnaryExpression:
 		validateExpr(e.Right, context, errors)
 	case *BinaryExpression:

@@ -2,10 +2,19 @@ package expr
 
 import "testing"
 
+func testValidationContext(userVariables ...string) ValidationContext {
+	context := DefaultValidationContext()
+	context.UserVariables = make(map[string]struct{}, len(userVariables))
+	for _, name := range userVariables {
+		context.UserVariables[name] = struct{}{}
+	}
+	return context
+}
+
 func TestValidateNumberExpression(t *testing.T) {
 	expr := &NumberExpression{Value: "3.14"}
 
-	errors := Validate(expr)
+	errors := Validate(expr, DefaultValidationContext())
 	if len(errors) != 0 {
 		t.Fatalf("expected no errors, got %d", len(errors))
 	}
@@ -14,7 +23,7 @@ func TestValidateNumberExpression(t *testing.T) {
 func TestValidateVariableExpression(t *testing.T) {
 	expr := &VariableExpression{Name: "x"}
 
-	errors := Validate(expr)
+	errors := Validate(expr, testValidationContext("x"))
 	if len(errors) != 0 {
 		t.Fatalf("expected no errors, got %d", len(errors))
 	}
@@ -26,7 +35,7 @@ func TestValidateUnaryExpression(t *testing.T) {
 		Right:    &VariableExpression{Name: "x"},
 	}
 
-	errors := Validate(expr)
+	errors := Validate(expr, testValidationContext("x"))
 	if len(errors) != 0 {
 		t.Fatalf("expected no errors, got %d", len(errors))
 	}
@@ -39,7 +48,7 @@ func TestValidateBinaryExpression(t *testing.T) {
 		Right:    &NumberExpression{Value: "2"},
 	}
 
-	errors := Validate(expr)
+	errors := Validate(expr, testValidationContext("x"))
 	if len(errors) != 0 {
 		t.Fatalf("expected no errors, got %d", len(errors))
 	}
@@ -49,11 +58,11 @@ func TestValidateKnownFunction(t *testing.T) {
 	expr := &FunctionCallExpression{
 		Name: "sin",
 		Arguments: []Expression{
-			&VariableExpression{Name: "x"},
+			&VariableExpression{Name: "y1"},
 		},
 	}
 
-	errors := Validate(expr)
+	errors := Validate(expr, testValidationContext("y1"))
 	if len(errors) != 0 {
 		t.Fatalf("expected no errors, got %d", len(errors))
 	}
@@ -67,7 +76,7 @@ func TestValidateUnknownFunction(t *testing.T) {
 		},
 	}
 
-	errors := Validate(expr)
+	errors := Validate(expr, testValidationContext("x"))
 	if len(errors) != 1 {
 		t.Fatalf("expected 1 error, got %d", len(errors))
 	}
@@ -92,7 +101,7 @@ func TestValidateNestedExpression(t *testing.T) {
 		},
 	}
 
-	errors := Validate(expr)
+	errors := Validate(expr, testValidationContext("x", "y"))
 	if len(errors) != 0 {
 		t.Fatalf("expected no errors, got %d", len(errors))
 	}
@@ -105,7 +114,7 @@ func (u *unknownExpression) expressionNode() {}
 func TestValidateUnknownExpression(t *testing.T) {
 	expr := &unknownExpression{}
 
-	errors := Validate(expr)
+	errors := Validate(expr, DefaultValidationContext())
 	if len(errors) != 1 {
 		t.Fatalf("expected 1 error, got %d", len(errors))
 	}
@@ -117,7 +126,7 @@ func TestValidateFunctionCallWithoutArguments(t *testing.T) {
 		Arguments: nil,
 	}
 
-	errors := Validate(expr)
+	errors := Validate(expr, DefaultValidationContext())
 	if len(errors) != 1 {
 		t.Fatalf("expected 1 error, got %d", len(errors))
 	}
@@ -132,7 +141,7 @@ func TestValidateFunctionCallWithTooManyArguments(t *testing.T) {
 		},
 	}
 
-	errors := Validate(expr)
+	errors := Validate(expr, testValidationContext("x", "y"))
 	if len(errors) != 1 {
 		t.Fatalf("expected 1 error, got %d", len(errors))
 	}
