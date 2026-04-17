@@ -2,11 +2,11 @@ package api
 
 import "net/http"
 
-func NewMux() *http.ServeMux {
+func NewMux() http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/health", HealthHandler)
 	mux.HandleFunc("/api/v1/jobs", CreateJobHandler)
 
-	return mux
+	return withCORS(mux)
 }

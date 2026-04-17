@@ -23,7 +23,7 @@ type CreateJobRequest struct {
 }
 
 type CreateJobResponse struct {
-	JobID  string `json:"job_id"`
+	JobID  string `json:"jobId"`
 	Status string `json:"status"`
 }
 
