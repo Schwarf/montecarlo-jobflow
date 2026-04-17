@@ -12,7 +12,7 @@ func (r *CreateJobRequest) ValidateBasic() error {
 	if r.Integrand == "" {
 		return fmt.Errorf("integrand must not be empty")
 	}
-	if len(r.Variables) == 0 {
+	if len(r.IntegrationVariables) == 0 {
 		return fmt.Errorf("at least one variable is required")
 	}
 	if r.Evaluations <= 0 {
@@ -20,7 +20,7 @@ func (r *CreateJobRequest) ValidateBasic() error {
 	}
 
 	seen := make(map[string]struct{})
-	for _, v := range r.Variables {
+	for _, v := range r.IntegrationVariables {
 		if v.Name == "" {
 			return fmt.Errorf("variable name must not be empty")
 		}

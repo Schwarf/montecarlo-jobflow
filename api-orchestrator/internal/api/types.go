@@ -16,10 +16,10 @@ type VariableSpec struct {
 }
 
 type CreateJobRequest struct {
-	Name        string         `json:"name"`
-	Integrand   string         `json:"integrand"`
-	Variables   []VariableSpec `json:"variables"`
-	Evaluations int            `json:"evaluations"`
+	Name                 string         `json:"name"`
+	Integrand            string         `json:"integrand"`
+	IntegrationVariables []VariableSpec `json:"variables"`
+	Evaluations          int            `json:"evaluations"`
 }
 
 type CreateJobResponse struct {
