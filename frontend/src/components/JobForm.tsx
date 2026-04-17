@@ -32,6 +32,12 @@ export function JobForm() {
         ]);
     }
 
+    function handleRemoveIntegrationVariable(indexToRemove: number) {
+        setIntegrationVariables(
+            integrationVariables.filter((_, index) => index !== indexToRemove)
+        );
+    }
+
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
         setResultMessage("");
@@ -118,6 +124,11 @@ export function JobForm() {
                             }
                         />
                     </div>
+                    <button type="button"
+                        onClick={() => handleRemoveIntegrationVariable(index)}
+                    >
+                        Remove this variable
+                    </button>
                 </div>
             ))}
 
