@@ -205,9 +205,16 @@ export function JobForm() {
                             Allowed characters: letters, digits, parentheses, plus, minus,
                             multiply, divide, power, decimal point, and spaces.
                         </p>
-                        <p>
-                            Example: <code>(1+x^2+y^2+Pi*ln(1+z^2+2*x*y))^4</code>
-                        </p>
+                        <p><strong>Supported functions</strong></p>
+                        <p>Trigonometric: sin, cos, tan</p>
+                        <p>Inverse trigonometric: asin, acos, atan</p>
+                        <p>Hyperbolic: sinh, cosh, tanh</p>
+                        <p>Inverse hyperbolic: asinh, acosh, atanh</p>
+                        <p>Logarithmic and exponential: log10, ln, log2, exp</p>
+
+                        <p><strong>Supported constants</strong></p>
+                        <p>Circular constant: Pi</p>
+                        <p>Euler's number: E</p>
                     </div>
                 </section>
             </div>
