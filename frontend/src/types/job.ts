@@ -12,6 +12,6 @@ export type CreateJobRequest = {
 };
 
 export type CreateJobResponse = {
-    jobID: string;
+    jobId: string;
     status: string;
 };

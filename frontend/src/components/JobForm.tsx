@@ -64,7 +64,7 @@ export function JobForm() {
                 evaluations,
             });
 
-            setResultMessage(`Job created: ${response.jobID} (${response.status})`);
+            setResultMessage(`Job created: ${response.jobId} (${response.status})`);
         } catch (error) {
             setErrorMessage("Failed to create job");
             console.error(error);
