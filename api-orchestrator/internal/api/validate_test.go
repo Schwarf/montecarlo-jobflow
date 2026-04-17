@@ -55,3 +55,20 @@ func TestValidateBasicRejectsInvalidVariableNames(t *testing.T) {
 		}
 	}
 }
+
+func TestValidateBasicRejectsDuplicateVariableNames(t *testing.T) {
+	req := CreateJobRequest{
+		Name:      "test-job",
+		Integrand: "x + 1",
+		IntegrationVariables: []VariableSpec{
+			{Name: "x", Lower: "0", Upper: "1"},
+			{Name: "x", Lower: "2", Upper: "3"},
+		},
+		Evaluations: 1000,
+	}
+
+	err := req.ValidateBasic()
+	if err == nil {
+		t.Fatal("expected error for duplicate variable names, got nil")
+	}
+}
