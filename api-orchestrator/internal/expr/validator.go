@@ -46,10 +46,17 @@ func Validate(expr Expression, context ValidationContext) []ValidationError {
 	return errors
 }
 
+func appendValidationError(errors *[]ValidationError, format string, args ...any) {
+	*errors = append(*errors, ValidationError{
+		Message: fmt.Sprintf(format, args...),
+	})
+}
+
 func validateExpr(expr Expression, context ValidationContext, errors *[]ValidationError) {
 	switch e := expr.(type) {
 	case *NumberExpression:
 		return
+
 	case *VariableExpression:
 		if _, ok := context.BuiltInConstants[e.Name]; ok {
 			return
@@ -57,32 +64,34 @@ func validateExpr(expr Expression, context ValidationContext, errors *[]Validati
 		if _, ok := context.UserVariables[e.Name]; ok {
 			return
 		}
+		appendValidationError(errors, "unknown identifier %q", e.Name)
 
-		*errors = append(*errors, ValidationError{
-			Message: fmt.Sprintf("unknown identifier %q", e.Name),
-		})
 	case *UnaryExpression:
 		validateExpr(e.Right, context, errors)
+
 	case *BinaryExpression:
 		validateExpr(e.Left, context, errors)
 		validateExpr(e.Right, context, errors)
+
 	case *FunctionCallExpression:
 		expectedArgCount, ok := context.AllowedFunctions[e.Name]
 		if !ok {
-			*errors = append(*errors, ValidationError{
-				Message: fmt.Sprintf("unknown function %q", e.Name),
-			})
+			appendValidationError(errors, "unknown function %q", e.Name)
 		} else if len(e.Arguments) != expectedArgCount {
-			*errors = append(*errors, ValidationError{
-				Message: fmt.Sprintf("function %q expects %d argument(s), got %d", e.Name, expectedArgCount, len(e.Arguments)),
-			})
+			appendValidationError(
+				errors,
+				"function %q expects %d argument(s), got %d",
+				e.Name,
+				expectedArgCount,
+				len(e.Arguments),
+			)
 		}
+
 		for _, arg := range e.Arguments {
 			validateExpr(arg, context, errors)
 		}
+
 	default:
-		*errors = append(*errors, ValidationError{
-			Message: fmt.Sprintf("unknown expression type %T", expr),
-		})
+		appendValidationError(errors, "unknown expression type %T", expr)
 	}
 }
