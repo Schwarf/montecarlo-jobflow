@@ -49,7 +49,7 @@ func isValidIdentifier(s string) bool {
 
 	for i, r := range s {
 		if i == 0 {
-			if !unicode.IsLetter(r) && r != '_' {
+			if !unicode.IsLetter(r) {
 				return false
 			}
 			continue
