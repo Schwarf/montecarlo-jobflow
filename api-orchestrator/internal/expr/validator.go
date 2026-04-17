@@ -36,6 +36,7 @@ func DefaultValidationContext() ValidationContext {
 			"Pi": {},
 			"E":  {},
 		},
+		UserVariables: map[string]struct{}{},
 	}
 }
 

@@ -150,3 +150,57 @@ func TestValidateFunctionCallWithTooManyArguments(t *testing.T) {
 		t.Fatal("expected non-empty error message")
 	}
 }
+
+func TestValidateBuiltInConstantPi(t *testing.T) {
+	expr := &VariableExpression{Name: "Pi"}
+
+	errors := Validate(expr, DefaultValidationContext())
+	if len(errors) != 0 {
+		t.Fatalf("expected no errors, got %d", len(errors))
+	}
+}
+
+func TestValidateBuiltInConstantE(t *testing.T) {
+	expr := &VariableExpression{Name: "E"}
+
+	errors := Validate(expr, DefaultValidationContext())
+	if len(errors) != 0 {
+		t.Fatalf("expected no errors, got %d", len(errors))
+	}
+}
+
+func TestValidateUnknownVariableExpression(t *testing.T) {
+	expr := &VariableExpression{Name: "x"}
+
+	errors := Validate(expr, testValidationContext("y"))
+	if len(errors) != 1 {
+		t.Fatalf("expected 1 error, got %d", len(errors))
+	}
+}
+
+func TestValidateBuiltInConstantAndUserVariable(t *testing.T) {
+	expr := &BinaryExpression{
+		Left:     &VariableExpression{Name: "Pi"},
+		Operator: TokenMultiply,
+		Right:    &VariableExpression{Name: "r"},
+	}
+
+	errors := Validate(expr, testValidationContext("r"))
+	if len(errors) != 0 {
+		t.Fatalf("expected no errors, got %d", len(errors))
+	}
+}
+
+func TestValidateUnknownVariableExpressionMessage(t *testing.T) {
+	expr := &VariableExpression{Name: "foo"}
+
+	errors := Validate(expr, DefaultValidationContext())
+	if len(errors) != 1 {
+		t.Fatalf("expected 1 error, got %d", len(errors))
+	}
+
+	expected := `unknown identifier "foo"`
+	if errors[0].Message != expected {
+		t.Fatalf("expected error %q, got %q", expected, errors[0].Message)
+	}
+}
