@@ -34,7 +34,7 @@ func (r *CreateJobRequest) ValidateBasic() error {
 			return fmt.Errorf("duplicate variable name: %q", v.Name)
 		}
 		seen[v.Name] = struct{}{}
-
+		// ToDo The lower bound shall be smaller than the upper bound. if not integrand gets a global minus
 		if v.Lower == "" {
 			return fmt.Errorf("variable %q has empty lower bound", v.Name)
 		}
