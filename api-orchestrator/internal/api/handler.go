@@ -5,6 +5,8 @@ import (
 	"errors"
 	"io"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 func HealthHandler(w http.ResponseWriter, r *http.Request) {
@@ -63,8 +65,10 @@ func CreateJobHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	jobID := uuid.NewString()
+
 	resp := CreateJobResponse{
-		JobID:  "job-1",
+		JobID:  jobID,
 		Status: "queued",
 	}
 
