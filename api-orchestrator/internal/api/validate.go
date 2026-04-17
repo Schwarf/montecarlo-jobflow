@@ -2,7 +2,10 @@ package api
 
 import (
 	"fmt"
+	"strings"
 	"unicode"
+
+	"github.com/Schwarf/montecarlo-jobflow/api-orchestrator/internal/expr"
 )
 
 func (r *CreateJobRequest) ValidateBasic() error {
@@ -39,6 +42,35 @@ func (r *CreateJobRequest) ValidateBasic() error {
 			return fmt.Errorf("variable %q has empty upper bound", v.Name)
 		}
 	}
+	return nil
+}
+
+func (r *CreateJobRequest) ValidateSemantics() error {
+	tokens, err := expr.LexAll(r.Integrand)
+	if err != nil {
+		return err
+	}
+
+	parser := expr.NewParser(tokens)
+	expression, err := parser.Parse()
+	if err != nil {
+		return err
+	}
+
+	context := expr.DefaultValidationContext()
+	for _, variable := range r.IntegrationVariables {
+		context.UserVariables[variable.Name] = struct{}{}
+	}
+
+	validationErrors := expr.Validate(expression, context)
+	if len(validationErrors) > 0 {
+		var messages []string
+		for _, ve := range validationErrors {
+			messages = append(messages, ve.Message)
+		}
+		return fmt.Errorf("semantic validation failed: %s", strings.Join(messages, "; "))
+	}
+
 	return nil
 }
 
