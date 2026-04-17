@@ -176,3 +176,25 @@ func TestValidateBasicAcceptsMultipleDistinctVariables(t *testing.T) {
 		t.Fatalf("expected valid request, got error: %v", err)
 	}
 }
+
+func TestValidationComponentsValidIntegrand(t *testing.T) {
+	const validIntegrand = "(1+x^2+y^2 + Pi*ln(1+z^2+2*x*y))^4"
+	r := CreateJobRequest{
+		Name:      "test-job",
+		Integrand: validIntegrand,
+		IntegrationVariables: []VariableSpec{
+			{Name: "x", Lower: "0", Upper: "1"},
+			{Name: "y", Lower: "0", Upper: "1"},
+			{Name: "z", Lower: "0", Upper: "1"},
+		},
+		Evaluations: 1000000,
+	}
+	err := r.ValidateBasic()
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	err = r.ValidateSemantics()
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+}
