@@ -38,6 +38,18 @@ export function JobForm() {
         );
     }
 
+    function sanitizeIntegrand(value: string): string {
+        return value.replace(/[^a-zA-Z0-9()+\-*/^.,\s]/g, "");
+    }
+
+    function sanitizeIntegrationVariableName(value: string): string {
+        return value.replace(/[^a-zA-Z0-9_]/g, "").slice(0, 16);
+    }
+
+    function sanitizeBoundary(value: string): string {
+        return value.replace(/[^0-9.]/g, "");
+    }
+
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
         setResultMessage("");
@@ -74,7 +86,7 @@ export function JobForm() {
                 <input
                     id="integrand"
                     value={integrand}
-                    onChange={(event) => setIntegrand(event.target.value)}
+                    onChange={(event) => setIntegrand(sanitizeIntegrand(event.target.value))}
                 />
             </div>
 
@@ -98,7 +110,7 @@ export function JobForm() {
                             id={`var-name-${index}`}
                             value={variable.name}
                             onChange={(event) =>
-                                handleIntegrationVariableChange(index, "name", event.target.value)
+                                handleIntegrationVariableChange(index, "name", sanitizeIntegrationVariableName(event.target.value))
                             }
                         />
                     </div>
@@ -109,7 +121,7 @@ export function JobForm() {
                             id={`var-lower-${index}`}
                             value={variable.lower}
                             onChange={(event) =>
-                                handleIntegrationVariableChange(index, "lower", event.target.value)
+                                handleIntegrationVariableChange(index, "lower", sanitizeBoundary(event.target.value))
                             }
                         />
                     </div>
@@ -120,7 +132,7 @@ export function JobForm() {
                             id={`var-upper-${index}`}
                             value={variable.upper}
                             onChange={(event) =>
-                                handleIntegrationVariableChange(index, "upper", event.target.value)
+                                handleIntegrationVariableChange(index, "upper", sanitizeBoundary(event.target.value))
                             }
                         />
                     </div>
