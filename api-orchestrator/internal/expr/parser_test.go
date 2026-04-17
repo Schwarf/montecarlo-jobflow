@@ -706,6 +706,13 @@ func TestParseMissingRightParenAfterTermFails(t *testing.T) {
 	}
 }
 
+func TestParseDoubleOperatorFails(t *testing.T) {
+	_, err := parseForTest(t, "(2++3")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
 func TestParseUnaryMinusVariable(t *testing.T) {
 	expr, err := parseForTest(t, "-x")
 	if err != nil {
