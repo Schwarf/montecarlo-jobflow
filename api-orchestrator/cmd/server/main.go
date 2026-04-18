@@ -23,6 +23,10 @@ func main() {
 		log.Fatalf("failed to ping database: %v", err)
 	}
 
+	if err := storesqlite.InitSchema(db); err != nil {
+		log.Fatalf("failed to initialize database schema: %v", err)
+	}
+
 	addr := ":8080"
 	mux := api.NewMux()
 
