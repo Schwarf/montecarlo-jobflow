@@ -1,12 +1,14 @@
 package api
 
-import "net/http"
+import (
+	"net/http"
+)
 
-func NewMux() http.Handler {
+func NewMux(h *Handler) http.Handler {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/health", HealthHandler)
-	mux.HandleFunc("/api/v1/jobs", CreateJobHandler)
+	mux.HandleFunc("/health", h.HealthHandler)
+	mux.HandleFunc("/api/v1/jobs", h.CreateJobHandler)
 
 	return withCORS(mux)
 }

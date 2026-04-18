@@ -5,11 +5,23 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"time"
 
+	"github.com/Schwarf/montecarlo-jobflow/api-orchestrator/internal/job"
 	"github.com/google/uuid"
 )
 
-func HealthHandler(w http.ResponseWriter, r *http.Request) {
+type Handler struct {
+	repo job.Repository
+}
+
+func NewHandler(repo job.Repository) *Handler {
+	return &Handler{
+		repo: repo,
+	}
+}
+
+func (h *Handler) HealthHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		writeJSON(w, http.StatusMethodNotAllowed, ErrorResponse{
 			Error: "method not allowed",
@@ -22,7 +34,7 @@ func HealthHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func CreateJobHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) CreateJobHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeJSON(w, http.StatusMethodNotAllowed, ErrorResponse{
 			Error: "method not allowed",
@@ -43,7 +55,6 @@ func CreateJobHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Reject trailing garbage or multiple JSON objects.
 	if err := dec.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
 		writeJSON(w, http.StatusBadRequest, ErrorResponse{
 			Error: "request body must contain exactly one JSON object",
@@ -66,10 +77,38 @@ func CreateJobHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jobID := uuid.NewString()
+	now := time.Now().UTC()
+
+	vars := make([]job.VariableSpec, 0, len(req.IntegrationVariables))
+	for _, v := range req.IntegrationVariables {
+		vars = append(vars, job.VariableSpec{
+			Name:  v.Name,
+			Lower: v.Lower,
+			Upper: v.Upper,
+		})
+	}
+
+	j := job.Job{
+		ID:                   jobID,
+		Name:                 req.Name,
+		Integrand:            req.Integrand,
+		IntegrationVariables: vars,
+		Evaluations:          req.Evaluations,
+		Status:               job.StatusQueued,
+		CreatedAt:            now,
+		UpdatedAt:            now,
+	}
+
+	if err := h.repo.Create(r.Context(), j); err != nil {
+		writeJSON(w, http.StatusInternalServerError, ErrorResponse{
+			Error: "failed to persist job",
+		})
+		return
+	}
 
 	resp := CreateJobResponse{
 		JobID:  jobID,
-		Status: "queued",
+		Status: string(job.StatusQueued),
 	}
 
 	writeJSON(w, http.StatusAccepted, resp)
