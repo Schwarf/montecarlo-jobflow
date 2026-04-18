@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Schwarf/montecarlo-jobflow/api-orchestrator/internal/api"
+	jobsqlite "github.com/Schwarf/montecarlo-jobflow/api-orchestrator/internal/job/sqlite"
 	storesqlite "github.com/Schwarf/montecarlo-jobflow/api-orchestrator/internal/store/sqlite"
 )
 
@@ -28,7 +29,9 @@ func main() {
 	}
 
 	addr := ":8080"
-	mux := api.NewMux()
+	repo := jobsqlite.NewRepository(db)
+	handler := api.NewHandler(repo)
+	mux := api.NewMux(handler)
 
 	log.Printf("starting server on %s", addr)
 	if err := http.ListenAndServe(addr, mux); err != nil {
