@@ -66,4 +66,22 @@ describe("JobForm", () => {
         expect(await screen.findByText(/job created: abc-123 \(queued\)/i)).toBeInTheDocument();
         expect(jobsApi.createJob).toHaveBeenCalled();
     });
+
+    it("shows an error message when submission fails", async () => {
+        vi.mocked(jobsApi.createJob).mockRejectedValue(new Error("request failed"));
+
+        render(<JobForm />);
+
+        fireEvent.change(screen.getByLabelText(/job name/i), {
+            target: { value: "test-job" },
+        });
+
+        fireEvent.change(screen.getByLabelText(/integrand/i), {
+            target: { value: "x^2" },
+        });
+
+        fireEvent.click(screen.getByRole("button", { name: /create job/i }));
+
+        expect(await screen.findByText(/Failed to create job/i)).toBeInTheDocument();
+    });
 });
