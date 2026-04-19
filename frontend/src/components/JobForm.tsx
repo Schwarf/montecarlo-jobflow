@@ -183,7 +183,7 @@ export function JobForm() {
             <div className="job-form-right">
                 <section className="panel integrand-panel">
                     <h2>Integrand</h2>
-
+                    <label htmlFor="integrand">Integrand</label>
                     <textarea
                         id="integrand"
                         className="integrand-textarea"
