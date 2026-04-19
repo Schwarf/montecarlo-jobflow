@@ -1,6 +1,6 @@
-import { describe, expect, it, vi, beforeEach} from "vitest";
+import {describe, expect, it, vi, beforeEach} from "vitest";
 import {fireEvent, render, screen} from "@testing-library/react";
-import { JobForm } from "./JobForm";
+import {JobForm} from "./JobForm";
 import * as jobsApi from "../api/jobs";
 
 
@@ -15,31 +15,31 @@ describe("JobForm", () => {
     });
 
     it("renders the main form fields", () => {
-        render(<JobForm />);
+        render(<JobForm/>);
 
         expect(screen.getByLabelText(/job name/i)).toBeInTheDocument();
         expect(screen.getByLabelText(/evaluations/i)).toBeInTheDocument();
         expect(screen.getByLabelText(/integrand/i)).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: /create job/i })).toBeInTheDocument();
+        expect(screen.getByRole("button", {name: /create job/i})).toBeInTheDocument();
     });
 
     it("adds another integration variable", () => {
-        render(<JobForm />);
+        render(<JobForm/>);
 
         expect(screen.getAllByLabelText(/^name$/i)).toHaveLength(1);
 
-        fireEvent.click(screen.getByRole("button", { name: /add variable/i }));
+        fireEvent.click(screen.getByRole("button", {name: /add variable/i}));
 
         expect(screen.getAllByLabelText(/^name$/i)).toHaveLength(2);
     });
 
     it("removes an integration variable", () => {
-        render(<JobForm />);
+        render(<JobForm/>);
 
-        fireEvent.click(screen.getByRole("button", { name: /add variable/i }));
+        fireEvent.click(screen.getByRole("button", {name: /add variable/i}));
         expect(screen.getAllByLabelText(/^name$/i)).toHaveLength(2);
 
-        const removeButtons = screen.getAllByRole("button", { name: /remove this variable/i });
+        const removeButtons = screen.getAllByRole("button", {name: /remove this variable/i});
         fireEvent.click(removeButtons[1]);
 
         expect(screen.getAllByLabelText(/^name$/i)).toHaveLength(1);
@@ -51,17 +51,17 @@ describe("JobForm", () => {
             status: "queued",
         });
 
-        render(<JobForm />);
+        render(<JobForm/>);
 
         fireEvent.change(screen.getByLabelText(/job name/i), {
-            target: { value: "test-job" },
+            target: {value: "test-job"},
         });
 
         fireEvent.change(screen.getByLabelText(/integrand/i), {
-            target: { value: "x^2" },
+            target: {value: "x^2"},
         });
 
-        fireEvent.click(screen.getByRole("button", { name: /create job/i }));
+        fireEvent.click(screen.getByRole("button", {name: /create job/i}));
 
         expect(await screen.findByText(/job created: abc-123 \(queued\)/i)).toBeInTheDocument();
         expect(jobsApi.createJob).toHaveBeenCalled();
@@ -70,18 +70,68 @@ describe("JobForm", () => {
     it("shows an error message when submission fails", async () => {
         vi.mocked(jobsApi.createJob).mockRejectedValue(new Error("request failed"));
 
-        render(<JobForm />);
+        render(<JobForm/>);
 
         fireEvent.change(screen.getByLabelText(/job name/i), {
-            target: { value: "test-job" },
+            target: {value: "test-job"},
         });
 
         fireEvent.change(screen.getByLabelText(/integrand/i), {
-            target: { value: "x^2" },
+            target: {value: "x^2"},
         });
 
-        fireEvent.click(screen.getByRole("button", { name: /create job/i }));
+        fireEvent.click(screen.getByRole("button", {name: /create job/i}));
 
         expect(await screen.findByText(/Failed to create job/i)).toBeInTheDocument();
+    });
+
+    it("submits the expected job payload", async () => {
+        vi.mocked(jobsApi.createJob).mockResolvedValue({
+            jobId: "abc-123",
+            status: "queued",
+        });
+
+        render(<JobForm/>);
+
+        fireEvent.change(screen.getByLabelText(/job name/i), {
+            target: {value: "test-job"},
+        });
+
+        fireEvent.change(screen.getByLabelText(/integrand/i), {
+            target: {value: "(1+x^2)^4"},
+        });
+
+        fireEvent.change(screen.getByLabelText(/evaluations/i), {
+            target: {value: "5000"},
+        });
+
+        fireEvent.change(screen.getByLabelText(/^name$/i), {
+            target: {value: "x"},
+        });
+
+        fireEvent.change(screen.getByLabelText(/lower/i), {
+            target: {value: "0"},
+        });
+
+        fireEvent.change(screen.getByLabelText(/upper/i), {
+            target: {value: "1"},
+        });
+
+        fireEvent.click(screen.getByRole("button", {name: /create job/i}));
+
+        await screen.findByText(/job created: abc-123 \(queued\)/i);
+
+        expect(jobsApi.createJob).toHaveBeenCalledWith({
+            name: "test-job",
+            integrand: "(1+x^2)^4",
+            variables: [
+                {
+                    name: "x",
+                    lower: "0",
+                    upper: "1",
+                },
+            ],
+            evaluations: 5000,
+        });
     });
 });
