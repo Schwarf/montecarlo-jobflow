@@ -134,4 +134,11 @@ describe("JobForm", () => {
             evaluations: 5000,
         });
     });
+
+    it("disables removing the last remaining integration variable", () => {
+        render(<JobForm />);
+
+        const removeButton = screen.getByRole("button", { name: /remove this variable/i });
+        expect(removeButton).toBeDisabled();
+    });
 });
