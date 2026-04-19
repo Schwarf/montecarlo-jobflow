@@ -195,3 +195,46 @@ func TestRepositoryCreateWithCanceledContextFails(t *testing.T) {
 		t.Fatalf("expected context canceled error, got %v", err)
 	}
 }
+
+func TestRepositoryGetByIDReturnsInsertedJob(t *testing.T) {
+	db := newTestDB(t)
+	repo := NewRepository(db)
+
+	j := testJob()
+	if err := repo.Create(context.Background(), j); err != nil {
+		t.Fatalf("Create returned error: %v", err)
+	}
+
+	got, err := repo.GetByID(context.Background(), j.ID)
+	if err != nil {
+		t.Fatalf("GetByID returned error: %v", err)
+	}
+
+	if got.ID != j.ID {
+		t.Fatalf("ID mismatch: got %q want %q", got.ID, j.ID)
+	}
+	if got.Name != j.Name {
+		t.Fatalf("Name mismatch: got %q want %q", got.Name, j.Name)
+	}
+	if got.Integrand != j.Integrand {
+		t.Fatalf("Integrand mismatch: got %q want %q", got.Integrand, j.Integrand)
+	}
+	if got.Evaluations != j.Evaluations {
+		t.Fatalf("Evaluations mismatch: got %d want %d", got.Evaluations, j.Evaluations)
+	}
+	if got.Status != j.Status {
+		t.Fatalf("Status mismatch: got %q want %q", got.Status, j.Status)
+	}
+	if !got.CreatedAt.Equal(j.CreatedAt) {
+		t.Fatalf("CreatedAt mismatch: got %v want %v", got.CreatedAt, j.CreatedAt)
+	}
+	if !got.UpdatedAt.Equal(j.UpdatedAt) {
+		t.Fatalf("UpdatedAt mismatch: got %v want %v", got.UpdatedAt, j.UpdatedAt)
+	}
+	if got.ErrorMessage != nil {
+		t.Fatalf("expected nil ErrorMessage, got %v", *got.ErrorMessage)
+	}
+	if got.ResultJSON != nil {
+		t.Fatalf("expected nil ResultJSON, got %v", *got.ResultJSON)
+	}
+}

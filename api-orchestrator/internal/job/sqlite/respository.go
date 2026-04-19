@@ -92,7 +92,7 @@ SELECT
 		&j.Name,
 		&j.Integrand,
 		&variableJSON,
-		j.Evaluations,
+		&j.Evaluations,
 		&status,
 		&errorMessage,
 		&resultJSON,
