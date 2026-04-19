@@ -5,6 +5,7 @@ import {
     sanitizeBoundary,
     sanitizeIntegrand,
     sanitizeIntegrationVariableName,
+    sanitizeJobName,
 } from "../utils/inputSanitizers";
 
 export function JobForm() {
@@ -72,7 +73,7 @@ export function JobForm() {
 
                     <div className="form-field">
                         <label htmlFor="name"> Job Name</label>
-                        <input id="name" value={name} onChange={(event) => setName(event.target.value)}
+                        <input id="name" value={name} onChange={(event) => setName(sanitizeJobName(event.target.value))}
                         />
                     </div>
                     <div className="form-field">
