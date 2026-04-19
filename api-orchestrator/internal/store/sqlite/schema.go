@@ -5,7 +5,8 @@ import "database/sql"
 func InitSchema(db *sql.DB) error {
 	const query = `
 CREATE TABLE IF NOT EXISTS jobs (
-    id TEXT PRIMARY KEY,
+    row_id INTEGER PRIMARY KEY,
+	job_id TEXT NOT NULL UNIQUE,
     name TEXT NOT NULL,
     integrand TEXT NOT NULL,
     variables_json TEXT NOT NULL,

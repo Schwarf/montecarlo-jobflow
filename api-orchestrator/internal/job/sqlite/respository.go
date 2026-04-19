@@ -28,7 +28,7 @@ func (r *Repository) Create(ctx context.Context, j job.Job) error {
 
 	const query = `
 INSERT INTO jobs (
-    id,
+    job_id,
     name,
     integrand,
     variables_json,
