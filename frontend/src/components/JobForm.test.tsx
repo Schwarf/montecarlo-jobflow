@@ -190,4 +190,77 @@ describe("JobForm", () => {
             evaluations: 1000,
         });
     });
+
+    it("sanitizes the job name input in the UI", () => {
+        render(<JobForm />);
+
+        const jobNameInput = screen.getByLabelText(/job name/i) as HTMLInputElement;
+
+        fireEvent.change(jobNameInput, {
+            target: { value: "job name!_test-1" },
+        });
+
+        expect(jobNameInput.value).toBe("jobname_test-1");
+    });
+
+    it("sanitizes the integrand input in the UI", () => {
+        render(<JobForm />);
+
+        const integrandInput = screen.getByLabelText(/integrand/i) as HTMLTextAreaElement;
+
+        fireEvent.change(integrandInput, {
+            target: { value: "sin(x); a@b#c" },
+        });
+
+        expect(integrandInput.value).toBe("sin(x) abc");
+    });
+
+    it("sanitizes the integration variable name input in the UI", () => {
+        render(<JobForm />);
+
+        const variableNameInput = screen.getByLabelText(/^name$/i) as HTMLInputElement;
+
+        fireEvent.change(variableNameInput, {
+            target: { value: "x-1!_abc" },
+        });
+
+        expect(variableNameInput.value).toBe("x1_abc");
+    });
+
+    it("limits the integration variable name length in the UI", () => {
+        render(<JobForm />);
+
+        const variableNameInput = screen.getByLabelText(/^name$/i) as HTMLInputElement;
+
+        fireEvent.change(variableNameInput, {
+            target: { value: "abcdefghijklmnopqr" },
+        });
+
+        expect(variableNameInput.value).toBe("abcdefghijklmnop");
+    });
+
+    it("sanitizes the lower boundary input in the UI", () => {
+        render(<JobForm />);
+
+        const lowerInput = screen.getByLabelText(/lower/i) as HTMLInputElement;
+
+        fireEvent.change(lowerInput, {
+            target: { value: "a1b2.3c" },
+        });
+
+        expect(lowerInput.value).toBe("12.3");
+    });
+
+    it("sanitizes the upper boundary input in the UI", () => {
+        render(<JobForm />);
+
+        const upperInput = screen.getByLabelText(/upper/i) as HTMLInputElement;
+
+        fireEvent.change(upperInput, {
+            target: { value: "x9y8.7z" },
+        });
+
+        expect(upperInput.value).toBe("98.7");
+    });
 });
+
