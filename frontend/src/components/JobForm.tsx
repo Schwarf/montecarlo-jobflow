@@ -1,18 +1,11 @@
 import React, { useState } from "react";
 import { createJob } from "../api/jobs";
 import type { VariableSpec } from "../types/job";
-
-function sanitizeIntegrand(value: string): string {
-    return value.replace(/[^a-zA-Z0-9()+\-*/^.,\s]/g, "");
-}
-
-function sanitizeIntegrationVariableName(value: string): string {
-    return value.replace(/[^a-zA-Z0-9_]/g, "").slice(0, 16);
-}
-
-function sanitizeBoundary(value: string): string {
-    return value.replace(/[^0-9.]/g, "");
-}
+import {
+    sanitizeBoundary,
+    sanitizeIntegrand,
+    sanitizeIntegrationVariableName,
+} from "../utils/inputSanitizers";
 
 export function JobForm() {
     const [name, setName] = useState("");
