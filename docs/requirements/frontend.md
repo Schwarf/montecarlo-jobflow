@@ -12,34 +12,34 @@ The frontend provides a minimal user interface for job submission and for displa
 
 ## Core Functional Requirements
 
-- **FE-001** [implemented] [manually-tested]  
+- **FE-001** [implemented] [automated-test-covered]  
   The frontend shall allow a user to enter a job name.
 
-- **FE-002** [implemented] [manually-tested]  
+- **FE-002** [implemented] [automated-test-covered]  
   The frontend shall allow a user to enter an integrand expression.
 
-- **FE-003** [implemented] [manually-tested]  
+- **FE-003** [implemented] [automated-test-covered]  
   The frontend shall allow a user to enter one or more integration variables.
 
-- **FE-004** [implemented] [manually-tested]  
+- **FE-004** [implemented] [automated-test-covered]  
   The frontend shall allow a user to specify lower and upper bounds for each integration variable.
 
-- **FE-005** [implemented] [manually-tested]  
+- **FE-005** [implemented] [automated-test-covered]  
   The frontend shall allow a user to enter the desired number of evaluations.
 
-- **FE-006** [implemented] [manually-tested]  
+- **FE-006** [implemented] [automated-test-covered]  
   The frontend shall allow a user to submit the job to the API orchestrator.
 
-- **FE-007** [implemented] [manually-tested]  
+- **FE-007** [implemented] [automated-test-covered]  
   The frontend shall send job data in the JSON structure expected by the backend.
 
-- **FE-008** [implemented] [manually-tested]  
+- **FE-008** [implemented] [automated-test-covered]  
   The frontend shall process the backend response and display the returned job ID.
 
-- **FE-009** [implemented] [manually-tested]  
+- **FE-009** [implemented] [automated-test-covered]  
   The frontend shall process the backend response and display the returned job status.
 
-- **FE-010** [implemented] [manually-tested]  
+- **FE-010** [implemented] [automated-test-covered]  
   The frontend shall display backend-side errors if the submission fails.
 
 ## Data Model Requirements
@@ -47,16 +47,16 @@ The frontend provides a minimal user interface for job submission and for displa
 - **FE-011** [implemented] [manually-tested]  
   The frontend shall use request and response types consistent with the backend API.
 
-- **FE-012** [implemented] [manually-tested]  
+- **FE-012** [implemented] [automated-test-covered]  
   The frontend shall use a request model for job creation that includes `name`, `integrand`, `variables`, and `evaluations`.
 
-- **FE-013** [implemented] [manually-tested]  
+- **FE-013** [implemented] [automated-test-covered]  
   Each variable entry shall include `name`, `lower`, and `upper`.
 
-- **FE-014** [implemented] [manually-tested]  
+- **FE-014** [implemented] [automated-test-covered]  
   The frontend shall use a response model for job creation that includes job ID and status.
 
-- **FE-015** [implemented] [manually-tested]  
+- **FE-015** [implemented] [automated-test-covered]  
   The frontend shall keep JSON field names aligned with the backend contract.
 
 - **FE-016** [planned] [not-verified]  
@@ -70,10 +70,10 @@ The frontend provides a minimal user interface for job submission and for displa
 - **FE-018** [implemented] [manually-tested]  
   The frontend shall prioritize simplicity.
 
-- **FE-019** [implemented] [manually-tested]  
+- **FE-019** [implemented] [automated-test-covered]  
   The frontend shall prioritize correctness of API interaction.
 
-- **FE-020** [implemented] [manually-tested]  
+- **FE-020** [implemented] [automated-test-covered]  
   The frontend shall prioritize clear feedback after submission.
 
 - **FE-021** [implemented] [manually-tested]  
