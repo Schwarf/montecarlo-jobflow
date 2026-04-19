@@ -43,7 +43,7 @@ The API orchestrator provides:
 - **API-008** [implemented] [manually-tested]  
   The API orchestrator shall assign or create a unique job identifier for each accepted job.
 
-- **API-009** [implemented] [manually-tested]  
+- **API-009** [implemented] [automated-test-covered]  
   The API orchestrator shall persist accepted jobs in the database.
 
 - **API-010** [implemented] [manually-tested]  
@@ -140,13 +140,10 @@ The API orchestrator provides:
 
 ## Persistence Requirements
 
-- **API-040** [implemented] [manually-tested]  
+- **API-040** [implemented] [automated-test-covered]  
   The API orchestrator shall persist accepted jobs through a persistence layer.
 
-- **API-041** [implemented] [manually-tested]  
-  The API orchestrator shall not require the frontend to communicate directly with the database.
-
-- **API-042** [implemented] [manually-tested]  
+- **API-042** [implemented] [automated-test-covered]  
   The API orchestrator shall store enough information to reconstruct a submitted job and its current state.
 
 ## Initial Non-Functional Requirements
