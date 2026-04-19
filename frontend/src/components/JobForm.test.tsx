@@ -262,5 +262,36 @@ describe("JobForm", () => {
 
         expect(upperInput.value).toBe("98.7");
     });
+
+    it("submits evaluations as a number", async () => {
+        vi.mocked(jobsApi.createJob).mockResolvedValue({
+            jobId: "abc-123",
+            status: "queued",
+        });
+
+        render(<JobForm />);
+
+        fireEvent.change(screen.getByLabelText(/job name/i), {
+            target: { value: "test-job" },
+        });
+
+        fireEvent.change(screen.getByLabelText(/integrand/i), {
+            target: { value: "x^2" },
+        });
+
+        fireEvent.change(screen.getByLabelText(/evaluations/i), {
+            target: { value: "5000" },
+        });
+
+        fireEvent.click(screen.getByRole("button", { name: /create job/i }));
+
+        await screen.findByText(/job created: abc-123 \(queued\)/i);
+
+        expect(jobsApi.createJob).toHaveBeenCalledWith(
+            expect.objectContaining({
+                evaluations: 5000,
+            })
+        );
+    });
 });
 
