@@ -293,5 +293,57 @@ describe("JobForm", () => {
             })
         );
     });
+
+    it("clears the old error message after a successful submit", async () => {
+        vi.mocked(jobsApi.createJob)
+            .mockRejectedValueOnce(new Error("request failed"))
+            .mockResolvedValueOnce({
+                jobId: "abc-123",
+                status: "queued",
+            });
+
+        render(<JobForm />);
+
+        fireEvent.change(screen.getByLabelText(/job name/i), {
+            target: { value: "test-job" },
+        });
+
+        fireEvent.change(screen.getByLabelText(/integrand/i), {
+            target: { value: "x^2" },
+        });
+
+        fireEvent.click(screen.getByRole("button", { name: /create job/i }));
+        expect(await screen.findByText(/failed to create job/i)).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole("button", { name: /create job/i }));
+        expect(await screen.findByText(/job created: abc-123 \(queued\)/i)).toBeInTheDocument();
+        expect(screen.queryByText(/failed to create job/i)).not.toBeInTheDocument();
+    });
+
+    it("clears the old success message after a failed submit", async () => {
+        vi.mocked(jobsApi.createJob)
+            .mockResolvedValueOnce({
+                jobId: "abc-123",
+                status: "queued",
+            })
+            .mockRejectedValueOnce(new Error("request failed"));
+
+        render(<JobForm />);
+
+        fireEvent.change(screen.getByLabelText(/job name/i), {
+            target: { value: "test-job" },
+        });
+
+        fireEvent.change(screen.getByLabelText(/integrand/i), {
+            target: { value: "x^2" },
+        });
+
+        fireEvent.click(screen.getByRole("button", { name: /create job/i }));
+        expect(await screen.findByText(/job created: abc-123 \(queued\)/i)).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole("button", { name: /create job/i }));
+        expect(await screen.findByText(/failed to create job/i)).toBeInTheDocument();
+        expect(screen.queryByText(/job created: abc-123 \(queued\)/i)).not.toBeInTheDocument();
+    });
 });
 
