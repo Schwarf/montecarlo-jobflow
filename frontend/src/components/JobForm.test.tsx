@@ -141,4 +141,53 @@ describe("JobForm", () => {
         const removeButton = screen.getByRole("button", { name: /remove this variable/i });
         expect(removeButton).toBeDisabled();
     });
+
+    it("submits multiple integration variables in the payload", async () => {
+        vi.mocked(jobsApi.createJob).mockResolvedValue({
+            jobId: "abc-123",
+            status: "queued",
+        });
+
+        render(<JobForm />);
+
+        fireEvent.change(screen.getByLabelText(/job name/i), {
+            target: { value: "test-job" },
+        });
+
+        fireEvent.change(screen.getByLabelText(/integrand/i), {
+            target: { value: "x+y" },
+        });
+
+        fireEvent.change(screen.getByLabelText(/evaluations/i), {
+            target: { value: "1000" },
+        });
+
+        fireEvent.click(screen.getByRole("button", { name: /add variable/i }));
+
+        const nameInputs = screen.getAllByLabelText(/^name$/i);
+        const lowerInputs = screen.getAllByLabelText(/lower/i);
+        const upperInputs = screen.getAllByLabelText(/upper/i);
+
+        fireEvent.change(nameInputs[0], { target: { value: "x" } });
+        fireEvent.change(lowerInputs[0], { target: { value: "0" } });
+        fireEvent.change(upperInputs[0], { target: { value: "1" } });
+
+        fireEvent.change(nameInputs[1], { target: { value: "y" } });
+        fireEvent.change(lowerInputs[1], { target: { value: "2" } });
+        fireEvent.change(upperInputs[1], { target: { value: "3" } });
+
+        fireEvent.click(screen.getByRole("button", { name: /create job/i }));
+
+        await screen.findByText(/job created: abc-123 \(queued\)/i);
+
+        expect(jobsApi.createJob).toHaveBeenCalledWith({
+            name: "test-job",
+            integrand: "x+y",
+            variables: [
+                { name: "x", lower: "0", upper: "1" },
+                { name: "y", lower: "2", upper: "3" },
+            ],
+            evaluations: 1000,
+        });
+    });
 });
