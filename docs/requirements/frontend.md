@@ -2,92 +2,82 @@
 
 ## Purpose
 
-The frontend shall provide a web-based user interface for defining numerical integration jobs, submitting them to the backend, and inspecting the resulting job status.
+The frontend provides a web-based user interface for defining numerical integration jobs, submitting them to the backend, and inspecting the resulting job status.
 
-The initial version shall focus on a simple and functional job submission workflow.
+The initial version focuses on a simple and functional job submission workflow.
 
 ## Initial Scope
 
-The frontend shall provide:
-
-- a form for defining and submitting integration jobs
-- a way to enter the job name
-- a way to enter the integrand
-- a way to enter integration variables with lower and upper bounds
-- a way to enter the number of evaluations
-- a way to display the backend response after job submission
-- a way to display validation or submission errors
+The frontend provides a minimal user interface for job submission and for displaying backend responses.
 
 ## Core Functional Requirements
 
-The frontend shall allow a user to:
+- **FE-001** [implemented] [manually-tested]  
+  The frontend shall allow a user to enter a job name.
 
-- enter a job name
-- enter an integrand expression
-- enter one or more integration variables
-- specify lower and upper bounds for each integration variable
-- enter the desired number of evaluations
-- submit the job to the API orchestrator
+- **FE-002** [implemented] [manually-tested]  
+  The frontend shall allow a user to enter an integrand expression.
 
-The frontend shall send job data in the JSON structure expected by the backend.
+- **FE-003** [implemented] [manually-tested]  
+  The frontend shall allow a user to enter one or more integration variables.
 
-The frontend shall process the backend response and display at least:
+- **FE-004** [implemented] [manually-tested]  
+  The frontend shall allow a user to specify lower and upper bounds for each integration variable.
 
-- the returned job ID
-- the returned job status
+- **FE-005** [implemented] [manually-tested]  
+  The frontend shall allow a user to enter the desired number of evaluations.
 
-The frontend shall display backend-side errors if the submission fails.
+- **FE-006** [implemented] [manually-tested]  
+  The frontend shall allow a user to submit the job to the API orchestrator.
+
+- **FE-007** [implemented] [manually-tested]  
+  The frontend shall send job data in the JSON structure expected by the backend.
+
+- **FE-008** [implemented] [manually-tested]  
+  The frontend shall process the backend response and display the returned job ID.
+
+- **FE-009** [implemented] [manually-tested]  
+  The frontend shall process the backend response and display the returned job status.
+
+- **FE-010** [implemented] [manually-tested]  
+  The frontend shall display backend-side errors if the submission fails.
 
 ## Data Model Requirements
 
-The frontend shall use request and response types consistent with the backend API.
+- **FE-011** [implemented] [manually-tested]  
+  The frontend shall use request and response types consistent with the backend API.
 
-The frontend shall use a request model for job creation that includes:
+- **FE-012** [implemented] [manually-tested]  
+  The frontend shall use a request model for job creation that includes `name`, `integrand`, `variables`, and `evaluations`.
 
-- name
-- integrand
-- variables
-- evaluations
+- **FE-013** [implemented] [manually-tested]  
+  Each variable entry shall include `name`, `lower`, and `upper`.
 
-Each variable entry shall include:
+- **FE-014** [implemented] [manually-tested]  
+  The frontend shall use a response model for job creation that includes job ID and status.
 
-- name
-- lower
-- upper
+- **FE-015** [implemented] [manually-tested]  
+  The frontend shall keep JSON field names aligned with the backend contract.
 
-The frontend shall use a response model for job creation that includes:
+- **FE-016** [planned] [not-verified]  
+  The frontend should later allow a user to upload a JSON file containing a complete job definition.
 
-- job ID
-- status
+- **FE-017** [planned] [not-verified]  
+  The frontend should later parse such uploaded JSON files and convert them into the same request structure used for manual job submission.
 
-The frontend shall keep JSON field names aligned with the backend contract.
-
-The frontend shall display backend-side errors if the submission fails.
-
-The frontend should later allow a user to upload a text file containing a complete job definition in a predefined format.
-
-The frontend should later parse such uploaded files and convert them into the same request structure used for manual job submission.
-
-And under later extensions:
 ## Initial Non-Functional Requirements
 
-The frontend shall prioritize:
+- **FE-018** [implemented] [manually-tested]  
+  The frontend shall prioritize simplicity.
 
-- simplicity
-- correctness of API interaction
-- clear feedback after submission
-- ease of local development
+- **FE-019** [implemented] [manually-tested]  
+  The frontend shall prioritize correctness of API interaction.
 
-The frontend shall be implemented in TypeScript.
+- **FE-020** [implemented] [manually-tested]  
+  The frontend shall prioritize clear feedback after submission.
 
-The frontend should keep API interaction logic and UI logic reasonably separated.
-
-The frontend should remain easy to extend with later views such as:
-
-- job list view
-- job detail view
-- progress display
-- result display
+- **FE-021** [implemented] [manually-tested]  
+  The frontend shall prioritize ease of local development.
 
 ## Current Limitations / Later Extensions
 
