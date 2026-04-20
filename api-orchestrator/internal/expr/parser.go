@@ -155,7 +155,7 @@ func (p *Parser) parsePrimary() (Expression, error) {
 	case TokenIdentifier:
 		if p.peek().Type == TokenLeftParen {
 			functionName := token.Lexeme
-			p.advance() // consume identifier
+			p.advance() // consume function name e.g. sin
 			p.advance() // consume '('
 
 			var arguments []Expression
