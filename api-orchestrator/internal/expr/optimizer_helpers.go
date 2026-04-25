@@ -29,7 +29,7 @@ func IntegerLiteralValue(expr Expression) (int, bool) {
 }
 
 func IsTrivial(expr Expression) bool {
-	switch _ := expr.(type) {
+	switch expr.(type) {
 	case *VariableExpression, *NumberExpression:
 		return true
 	default:

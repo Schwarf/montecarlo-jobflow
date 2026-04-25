@@ -74,3 +74,33 @@ func TestIntegerLiteralValueFractionFails(t *testing.T) {
 		t.Fatal("expected ok=false for fraction expression 4/3")
 	}
 }
+
+func TestTrivialValidCases(t *testing.T) {
+	number := &NumberExpression{Value: "4"}
+	variable := &VariableExpression{Name: "x"}
+
+	if !IsTrivial(number) {
+		t.Fatal("expected trivial expression: number")
+	}
+	if !IsTrivial(variable) {
+		t.Fatal("expected trivial expression: variable")
+	}
+
+}
+
+func TestTrivialInvalidCases(t *testing.T) {
+	unary := &UnaryExpression{Right: &NumberExpression{Value: "4"}, Operator: TokenMinus}
+	binary := &BinaryExpression{Right: &NumberExpression{Value: "4"}, Operator: TokenMinus, Left: unary}
+	function := &FunctionCallExpression{Name: "sin", Arguments: []Expression{&VariableExpression{Name: "x"}}}
+
+	if IsTrivial(unary) {
+		t.Fatal("expected nontrivial expression: unary")
+	}
+
+	if IsTrivial(binary) {
+		t.Fatal("expected nontrivial expression: binary")
+	}
+	if IsTrivial(function) {
+		t.Fatal("expected nontrivial expression: function")
+	}
+}
