@@ -1,6 +1,9 @@
 package expr
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestComputationPlanBuilderNewTempVariable(t *testing.T) {
 	var b ComputationPlanBuilder
@@ -13,7 +16,7 @@ func TestComputationPlanBuilderNewTempVariable(t *testing.T) {
 	}
 }
 
-func TestComputationPlanBuilderEmit(t *testing.T) {
+func TestComputationPlanBuilderAssignToTempVariable(t *testing.T) {
 	var b ComputationPlanBuilder
 
 	expr := &BinaryExpression{
@@ -22,7 +25,7 @@ func TestComputationPlanBuilderEmit(t *testing.T) {
 		Right:    &VariableExpression{Name: "x"},
 	}
 
-	result := b.Emit(expr)
+	result := b.AssignToTempVariable(expr)
 
 	if result.Name != "h1" {
 		t.Fatalf("expected returned variable name h1, got %q", result.Name)
@@ -41,7 +44,7 @@ func TestComputationPlanBuilderEmit(t *testing.T) {
 	}
 }
 
-func TestComputationPlanBuilderEmitMultipleAssignments(t *testing.T) {
+func TestComputationPlanBuilderMultipleAssignments(t *testing.T) {
 	var b ComputationPlanBuilder
 
 	expr1 := &BinaryExpression{
@@ -56,8 +59,8 @@ func TestComputationPlanBuilderEmitMultipleAssignments(t *testing.T) {
 		Right:    &VariableExpression{Name: "h1"},
 	}
 
-	result1 := b.Emit(expr1)
-	result2 := b.Emit(expr2)
+	result1 := b.AssignToTempVariable(expr1)
+	result2 := b.AssignToTempVariable(expr2)
 
 	if result1.Name != "h1" {
 		t.Fatalf("expected first returned variable name h1, got %q", result1.Name)
@@ -82,5 +85,38 @@ func TestComputationPlanBuilderEmitMultipleAssignments(t *testing.T) {
 	}
 	if b.Assignments[1].Expr != expr2 {
 		t.Fatal("expected second emitted expression to be stored unchanged")
+	}
+}
+
+func TestComputationPlanBuilderBuildSquare(t *testing.T) {
+	var b ComputationPlanBuilder
+	expr1 := &BinaryExpression{
+		Left:     &VariableExpression{Name: "x"},
+		Operator: TokenPower,
+		Right:    &NumberExpression{"2"},
+	}
+	expected := &BinaryExpression{
+		Left:     &VariableExpression{Name: "x"},
+		Operator: TokenMultiply,
+		Right:    &VariableExpression{Name: "x"},
+	}
+
+	result, ok := b.BuildSquare(expr1)
+
+	if !ok {
+		t.Fatal("expected a square")
+	}
+	variable, ok := result.(*VariableExpression)
+
+	if variable.Name != "h1" {
+		t.Fatalf("expected returned variable name h1, got %q", variable.Name)
+	}
+
+	if b.Assignments[0].Name != "h1" {
+		t.Fatalf("expected first assignment name h1, got %q", b.Assignments[0].Name)
+	}
+
+	if !reflect.DeepEqual(b.Assignments[0].Expr, expected) {
+		t.Fatalf("expected different expression to be stored")
 	}
 }
