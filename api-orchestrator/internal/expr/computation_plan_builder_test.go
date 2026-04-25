@@ -349,3 +349,25 @@ func TestComputationPlanBuilderBuildLeavesCubeUnchanged(t *testing.T) {
 		t.Fatalf("expected 0 assignments, got %d", len(b.Assignments))
 	}
 }
+
+func TestComputationPlanBuilderBuildSimplifiesPowerOfOne(t *testing.T) {
+	var b ComputationPlanBuilder
+
+	expr := &BinaryExpression{
+		Left:     &VariableExpression{Name: "x"},
+		Operator: TokenPower,
+		Right:    &NumberExpression{Value: "1"},
+	}
+
+	result := b.Build(expr)
+
+	expected := &VariableExpression{Name: "x"}
+
+	if !reflect.DeepEqual(result, expected) {
+		t.Fatalf("expected expression x, got %#v", result)
+	}
+
+	if len(b.Assignments) != 0 {
+		t.Fatalf("expected 0 assignments, got %d", len(b.Assignments))
+	}
+}

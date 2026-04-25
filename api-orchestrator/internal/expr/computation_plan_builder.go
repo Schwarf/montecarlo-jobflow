@@ -33,6 +33,19 @@ func (b *ComputationPlanBuilder) AssignNonTrivialToTempVariable(expr Expression)
 	return b.AssignToTempVariable(expr)
 }
 
+func (b *ComputationPlanBuilder) SimplifyPowerOfOne(expr *BinaryExpression) (Expression, bool) {
+	if expr.Operator != TokenPower {
+		return nil, false
+	}
+
+	val, ok := IntegerLiteralValue(expr.Right)
+	if !ok || val != 1 {
+		return nil, false
+	}
+
+	return b.Build(expr.Left), true
+}
+
 func (b *ComputationPlanBuilder) BuildSquare(expr *BinaryExpression) (Expression, bool) {
 	if expr.Operator != TokenPower {
 		return nil, false
@@ -59,6 +72,10 @@ func (b *ComputationPlanBuilder) BuildSquare(expr *BinaryExpression) (Expression
 func (b *ComputationPlanBuilder) Build(expr Expression) Expression {
 	switch e := expr.(type) {
 	case *BinaryExpression:
+		one, ok := b.SimplifyPowerOfOne(e)
+		if ok {
+			return one
+		}
 		square, ok := b.BuildSquare(e)
 		if ok {
 			return square
