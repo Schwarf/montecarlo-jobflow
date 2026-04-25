@@ -225,6 +225,55 @@ func TestComputationPlanBuilderBuildWithTwoPowers(t *testing.T) {
 	}
 }
 
+func TestComputationPlanBuilderAssignNonTrivialToTempVariable(t *testing.T) {
+	var b ComputationPlanBuilder
+
+	expr := &FunctionCallExpression{Name: "sin", Arguments: []Expression{&VariableExpression{Name: "x"}}}
+
+	result := b.AssignNonTrivialToTempVariable(expr)
+	variable, ok := result.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected *VariableExpression, got %T", result)
+	}
+
+	if variable.Name != "h1" {
+		t.Fatalf("expected returned variable name h1, got %q", variable.Name)
+	}
+
+	if len(b.Assignments) != 1 {
+		t.Fatalf("expected 1 assignment, got %d", len(b.Assignments))
+	}
+
+	if b.Assignments[0].Name != "h1" {
+		t.Fatalf("expected assignment name h1, got %q", b.Assignments[0].Name)
+	}
+
+	if !reflect.DeepEqual(b.Assignments[0].Expr, expr) {
+		t.Fatalf("expected stored expression sin(x), got %#v", b.Assignments[0].Expr)
+	}
+}
+
+func TestComputationPlanBuilderAssignNonTrivialToTempVariableTrivialCase(t *testing.T) {
+	var b ComputationPlanBuilder
+
+	expr := &VariableExpression{Name: "x"}
+
+	result := b.AssignNonTrivialToTempVariable(expr)
+
+	variable, ok := result.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected *VariableExpression, got %T", result)
+	}
+
+	if variable.Name != "x" {
+		t.Fatalf("expected variable name x, got %q", variable.Name)
+	}
+
+	if len(b.Assignments) != 0 {
+		t.Fatalf("expected 0 assignments, got %d", len(b.Assignments))
+	}
+}
+
 func TestComputationPlanBuilderBuildSinSquared(t *testing.T) {
 	var b ComputationPlanBuilder
 

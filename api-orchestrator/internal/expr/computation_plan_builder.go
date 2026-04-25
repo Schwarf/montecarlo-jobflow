@@ -26,6 +26,13 @@ func (b *ComputationPlanBuilder) AssignToTempVariable(expr Expression) *Variable
 	return &VariableExpression{Name: name}
 }
 
+func (b *ComputationPlanBuilder) AssignNonTrivialToTempVariable(expr Expression) Expression {
+	if IsTrivial(expr) {
+		return expr
+	}
+	return b.AssignToTempVariable(expr)
+}
+
 func (b *ComputationPlanBuilder) BuildSquare(expr *BinaryExpression) (Expression, bool) {
 	if expr.Operator != TokenPower {
 		return nil, false
