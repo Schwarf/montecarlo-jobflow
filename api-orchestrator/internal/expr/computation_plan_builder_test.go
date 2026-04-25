@@ -129,3 +129,37 @@ func TestComputationPlanBuilderBuildSquare(t *testing.T) {
 		t.Fatalf("expected multiplication expression to be stored, got %#v", b.Assignments[0].Expr)
 	}
 }
+
+func TestComputationPlanBuilderBuild(t *testing.T) {
+	var b ComputationPlanBuilder
+
+	expr := &BinaryExpression{
+		Left: &BinaryExpression{
+			Left:     &VariableExpression{Name: "x"},
+			Operator: TokenPower,
+			Right:    &NumberExpression{Value: "2"},
+		},
+		Operator: TokenPlus,
+		Right:    &VariableExpression{Name: "y"},
+	}
+
+	expected := &BinaryExpression{
+		Left:     &VariableExpression{Name: "h1"},
+		Operator: TokenPlus,
+		Right:    &VariableExpression{Name: "y"},
+	}
+
+	result := b.Build(expr)
+
+	if !reflect.DeepEqual(result, expected) {
+		t.Fatalf("expected expression 'h1 + y'")
+	}
+	if len(b.Assignments) != 1 {
+		t.Fatalf("expected 1 assignment, got %d", len(b.Assignments))
+	}
+
+	if b.Assignments[0].Name != "h1" {
+		t.Fatalf("expected assignment name h1, got %q", b.Assignments[0].Name)
+	}
+
+}
