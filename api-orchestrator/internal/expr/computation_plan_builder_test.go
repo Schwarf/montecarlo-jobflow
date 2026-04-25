@@ -329,3 +329,23 @@ func TestComputationPlanBuilderBuildSinSquared(t *testing.T) {
 		t.Fatalf("expected second assignment h1*h1, got %#v", b.Assignments[1].Expr)
 	}
 }
+
+func TestComputationPlanBuilderBuildLeavesCubeUnchanged(t *testing.T) {
+	var b ComputationPlanBuilder
+
+	expr := &BinaryExpression{
+		Left:     &VariableExpression{Name: "x"},
+		Operator: TokenPower,
+		Right:    &NumberExpression{Value: "3"},
+	}
+
+	result := b.Build(expr)
+
+	if !reflect.DeepEqual(result, expr) {
+		t.Fatalf("expected expression to stay unchanged, got %#v", result)
+	}
+
+	if len(b.Assignments) != 0 {
+		t.Fatalf("expected 0 assignments, got %d", len(b.Assignments))
+	}
+}
