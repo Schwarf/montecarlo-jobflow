@@ -371,3 +371,42 @@ func TestComputationPlanBuilderBuildSimplifiesPowerOfOne(t *testing.T) {
 		t.Fatalf("expected 0 assignments, got %d", len(b.Assignments))
 	}
 }
+
+func TestComputationPlanBuilderSimplifyPowerOfMinusOne(t *testing.T) {
+	var b ComputationPlanBuilder
+
+	expr := &BinaryExpression{
+		Left:     &VariableExpression{Name: "x"},
+		Operator: TokenPower,
+		Right: &UnaryExpression{
+			Operator: TokenMinus,
+			Right:    &NumberExpression{Value: "1"},
+		},
+	}
+
+	expected := &VariableExpression{Name: "h1"}
+
+	result := b.Build(expr)
+
+	if !reflect.DeepEqual(result, expected) {
+		t.Fatalf("expected expression h1, got %#v", result)
+	}
+
+	if len(b.Assignments) != 1 {
+		t.Fatalf("expected 1 assignment, got %d", len(b.Assignments))
+	}
+
+	if b.Assignments[0].Name != "h1" {
+		t.Fatalf("expected assignment name h1, got %q", b.Assignments[0].Name)
+	}
+
+	expectedAssignment := &BinaryExpression{
+		Left:     &NumberExpression{Value: "1"},
+		Operator: TokenDivide,
+		Right:    &VariableExpression{Name: "x"},
+	}
+
+	if !reflect.DeepEqual(b.Assignments[0].Expr, expectedAssignment) {
+		t.Fatalf("expected assignment 1/x, got %#v", b.Assignments[0].Expr)
+	}
+}
