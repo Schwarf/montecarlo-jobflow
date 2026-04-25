@@ -43,11 +43,15 @@ func (b *ComputationPlanBuilder) BuildSquare(expr *BinaryExpression) (Expression
 		return nil, false
 	}
 
+	base := b.Build(expr.Left)
+	base = b.AssignNonTrivialToTempVariable(base)
+
 	mul := &BinaryExpression{
-		Left:     expr.Left,
+		Left:     base,
 		Operator: TokenMultiply,
-		Right:    expr.Left,
+		Right:    base,
 	}
+
 	result := b.AssignToTempVariable(mul)
 	return result, true
 }
