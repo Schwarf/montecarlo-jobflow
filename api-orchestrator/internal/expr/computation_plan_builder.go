@@ -56,10 +56,13 @@ func (b *ComputationPlanBuilder) SimplifyPowerOfMinusOne(expr *BinaryExpression)
 		return nil, false
 	}
 
+	base := b.Build(expr.Left)
+	base = b.AssignNonTrivialToTempVariable(base)
+
 	div := &BinaryExpression{
 		Left:     &NumberExpression{Value: "1"},
 		Operator: TokenDivide,
-		Right:    expr.Left,
+		Right:    base,
 	}
 
 	return b.AssignToTempVariable(div), true
