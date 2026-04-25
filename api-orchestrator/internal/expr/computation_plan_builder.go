@@ -44,3 +44,35 @@ func (b *ComputationPlanBuilder) BuildSquare(expr *BinaryExpression) (Expression
 	result := b.AssignToTempVariable(mul)
 	return result, true
 }
+
+func (b *ComputationPlanBuilder) Build(expr Expression) Expression {
+	switch e := expr.(type) {
+	case *BinaryExpression:
+		square, ok := b.BuildSquare(e)
+		if ok {
+			return square
+		}
+		left := b.Build(e.Left)
+		right := b.Build(e.Right)
+		return &BinaryExpression{
+			Left:     left,
+			Operator: e.Operator,
+			Right:    right,
+		}
+	case *UnaryExpression:
+		right := b.Build(e.Right)
+		return &UnaryExpression{
+			Operator: e.Operator,
+			Right:    right,
+		}
+	case *FunctionCallExpression:
+		result := FunctionCallExpression{Name: e.Name}
+		for _, arg := range e.Arguments {
+			res := b.Build(arg)
+			result.Arguments = append(result.Arguments, res)
+		}
+		return &result
+	default:
+		return expr
+	}
+}

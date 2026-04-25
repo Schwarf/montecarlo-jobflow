@@ -90,11 +90,13 @@ func TestComputationPlanBuilderMultipleAssignments(t *testing.T) {
 
 func TestComputationPlanBuilderBuildSquare(t *testing.T) {
 	var b ComputationPlanBuilder
+
 	expr1 := &BinaryExpression{
 		Left:     &VariableExpression{Name: "x"},
 		Operator: TokenPower,
-		Right:    &NumberExpression{"2"},
+		Right:    &NumberExpression{Value: "2"},
 	}
+
 	expected := &BinaryExpression{
 		Left:     &VariableExpression{Name: "x"},
 		Operator: TokenMultiply,
@@ -102,14 +104,21 @@ func TestComputationPlanBuilderBuildSquare(t *testing.T) {
 	}
 
 	result, ok := b.BuildSquare(expr1)
-
 	if !ok {
 		t.Fatal("expected a square")
 	}
+
 	variable, ok := result.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected *VariableExpression, got %T", result)
+	}
 
 	if variable.Name != "h1" {
 		t.Fatalf("expected returned variable name h1, got %q", variable.Name)
+	}
+
+	if len(b.Assignments) != 1 {
+		t.Fatalf("expected 1 assignment, got %d", len(b.Assignments))
 	}
 
 	if b.Assignments[0].Name != "h1" {
@@ -117,6 +126,6 @@ func TestComputationPlanBuilderBuildSquare(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(b.Assignments[0].Expr, expected) {
-		t.Fatalf("expected different expression to be stored")
+		t.Fatalf("expected multiplication expression to be stored, got %#v", b.Assignments[0].Expr)
 	}
 }
