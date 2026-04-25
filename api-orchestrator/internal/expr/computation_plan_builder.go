@@ -90,6 +90,36 @@ func (b *ComputationPlanBuilder) BuildSquare(expr *BinaryExpression) (Expression
 	return b.AssignToTempVariable(mul), true
 }
 
+func (b *ComputationPlanBuilder) BuildInverseSquare(expr *BinaryExpression) (Expression, bool) {
+	if expr.Operator != TokenPower {
+		return nil, false
+	}
+
+	val, ok := IntegerLiteralValue(expr.Right)
+	if !ok || val != -2 {
+		return nil, false
+	}
+
+	squareExpr := &BinaryExpression{
+		Left:     expr.Left,
+		Operator: TokenPower,
+		Right:    &NumberExpression{Value: "2"},
+	}
+
+	squared, ok := b.BuildSquare(squareExpr)
+	if !ok {
+		return nil, false
+	}
+
+	div := &BinaryExpression{
+		Left:     &NumberExpression{Value: "1"},
+		Operator: TokenDivide,
+		Right:    squared,
+	}
+
+	return b.AssignToTempVariable(div), true
+}
+
 func (b *ComputationPlanBuilder) Build(expr Expression) Expression {
 	switch e := expr.(type) {
 	case *BinaryExpression:
@@ -104,6 +134,10 @@ func (b *ComputationPlanBuilder) Build(expr Expression) Expression {
 		inverse, ok := b.SimplifyPowerOfMinusOne(e)
 		if ok {
 			return inverse
+		}
+		inverseSquare, ok := b.BuildInverseSquare(e)
+		if ok {
+			return inverseSquare
 		}
 
 		left := b.Build(e.Left)
