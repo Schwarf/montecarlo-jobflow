@@ -163,3 +163,64 @@ func TestComputationPlanBuilderBuild(t *testing.T) {
 	}
 
 }
+
+func TestComputationPlanBuilderBuildWithTwoPowers(t *testing.T) {
+	var b ComputationPlanBuilder
+
+	expr := &BinaryExpression{
+		Left: &BinaryExpression{
+			Left:     &VariableExpression{Name: "x"},
+			Operator: TokenPower,
+			Right:    &NumberExpression{Value: "2"},
+		},
+		Operator: TokenPlus,
+		Right: &BinaryExpression{
+			Left:     &VariableExpression{Name: "z"},
+			Operator: TokenPower,
+			Right:    &NumberExpression{Value: "2"},
+		},
+	}
+
+	expected := &BinaryExpression{
+		Left:     &VariableExpression{Name: "h1"},
+		Operator: TokenPlus,
+		Right:    &VariableExpression{Name: "h2"},
+	}
+
+	result := b.Build(expr)
+
+	expectedAssignment1 := &BinaryExpression{
+		Left:     &VariableExpression{Name: "x"},
+		Operator: TokenMultiply,
+		Right:    &VariableExpression{Name: "x"},
+	}
+
+	expectedAssignment2 := &BinaryExpression{
+		Left:     &VariableExpression{Name: "z"},
+		Operator: TokenMultiply,
+		Right:    &VariableExpression{Name: "z"},
+	}
+
+	if !reflect.DeepEqual(b.Assignments[0].Expr, expectedAssignment1) {
+		t.Fatalf("expected first assignment x*x, got %#v", b.Assignments[0].Expr)
+	}
+
+	if !reflect.DeepEqual(b.Assignments[1].Expr, expectedAssignment2) {
+		t.Fatalf("expected second assignment z*z, got %#v", b.Assignments[1].Expr)
+	}
+
+	if !reflect.DeepEqual(result, expected) {
+		t.Fatalf("expected expression 'h1 + h2'")
+	}
+	if len(b.Assignments) != 2 {
+		t.Fatalf("expected 2 assignments, got %d", len(b.Assignments))
+	}
+
+	if b.Assignments[0].Name != "h1" {
+		t.Fatalf("expected assignment name h1, got %q", b.Assignments[0].Name)
+	}
+
+	if b.Assignments[1].Name != "h2" {
+		t.Fatalf("expected assignment name h2, got %q", b.Assignments[1].Name)
+	}
+}
