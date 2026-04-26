@@ -2,6 +2,7 @@ package expr
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -36,22 +37,24 @@ func (g *CppCodeGenerator) GenerateComputationPlanFunction(
 
 	var builder strings.Builder
 	// function declaration
+	builder.WriteString("template <int dimension>\n")
 	builder.WriteString("double ")
 	builder.WriteString(functionName)
-
-	// function arguments
-	builder.WriteString("(")
-
-	for i, variableName := range variableNames {
-		if i > 0 {
-			builder.WriteString(", ")
-		}
-		builder.WriteString("double ")
-		builder.WriteString(variableName)
-	}
+	builder.WriteString("(const std::array<double, dimension>& sample, void* param) {\n")
 
 	// function body
-	builder.WriteString(") {\n")
+	builder.WriteString("    (void)param;\n\n")
+	builder.WriteString("(")
+	for i, variableName := range variableNames {
+		builder.WriteString("    const double ")
+		builder.WriteString(variableName)
+		builder.WriteString(" = sample[;\n")
+		builder.WriteString(strconv.Itoa(i))
+		builder.WriteString("];\n")
+	}
+
+	builder.WriteString("\n")
+
 	for _, assign := range assignments {
 		rhs, err := g.GenerateExpression(assign.Expr)
 		if err != nil {
