@@ -44,11 +44,10 @@ func (g *CppCodeGenerator) GenerateComputationPlanFunction(
 
 	// function body
 	builder.WriteString("    (void)param;\n\n")
-	builder.WriteString("(")
 	for i, variableName := range variableNames {
 		builder.WriteString("    const double ")
 		builder.WriteString(variableName)
-		builder.WriteString(" = sample[;\n")
+		builder.WriteString(" = sample[")
 		builder.WriteString(strconv.Itoa(i))
 		builder.WriteString("];\n")
 	}

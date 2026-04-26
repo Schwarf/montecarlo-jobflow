@@ -463,7 +463,11 @@ func TestCppCodeGeneratorGenerateComputationPlanFunction(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	expected := "double evaluate(double x, double y) {\n" +
+	expected := "template <int dimension>\n" +
+		"double evaluate(const std::array<double, dimension>& sample, void* param) {\n" +
+		"    (void)param;\n\n" +
+		"    const double x = sample[0];\n" +
+		"    const double y = sample[1];\n\n" +
 		"    const double h1 = (x * x);\n" +
 		"    const double h2 = (h1 + y);\n" +
 		"    return (h2 * h2);\n" +
@@ -496,7 +500,11 @@ func TestCppCodegenPipelineRepeatedOptimizedSubexpressions(t *testing.T) {
 		t.Fatalf("unexpected codegen error: %v", err)
 	}
 
-	expected := "double evaluate(double x, double y) {\n" +
+	expected := "template <int dimension>\n" +
+		"double evaluate(const std::array<double, dimension>& sample, void* param) {\n" +
+		"    (void)param;\n\n" +
+		"    const double x = sample[0];\n" +
+		"    const double y = sample[1];\n\n" +
 		"    const double h1 = (x + y);\n" +
 		"    const double h2 = (h1 * h1);\n" +
 		"    const double h3 = (1.0 + h2);\n" +
@@ -598,7 +606,10 @@ func TestCppCodeGeneratorGenerateSource(t *testing.T) {
 	}
 
 	expected := "#include <cmath>\n\n" +
-		"double evaluate(double x) {\n" +
+		"template <int dimension>\n" +
+		"double evaluate(const std::array<double, dimension>& sample, void* param) {\n" +
+		"    (void)param;\n\n" +
+		"    const double x = sample[0];\n\n" +
 		"    const double h1 = std::sin(x);\n" +
 		"    return h1;\n" +
 		"}\n"
