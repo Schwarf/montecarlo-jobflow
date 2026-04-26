@@ -7,6 +7,21 @@ import (
 
 type CppCodeGenerator struct{}
 
+func cppBinaryOperator(operator TokenType) (string, error) {
+	switch operator {
+	case TokenPlus:
+		return "+", nil
+	case TokenMinus:
+		return "-", nil
+	case TokenMultiply:
+		return "*", nil
+	case TokenDivide:
+		return "/", nil
+	default:
+		return "", fmt.Errorf("unsupported binary operator %v", operator)
+	}
+}
+
 func (g *CppCodeGenerator) GenerateFunction(functionName string, variableNames []string, returnExpression string) (string, error) {
 	if functionName == "" {
 		return "", fmt.Errorf("function name must not be empty")
@@ -42,6 +57,22 @@ func (g *CppCodeGenerator) GenerateExpression(expr Expression) (string, error) {
 		return e.Value, nil
 	case *VariableExpression:
 		return e.Name, nil
+	case *BinaryExpression:
+		left, err := g.GenerateExpression(e.Left)
+		if err != nil {
+			return "", err
+		}
+
+		right, err := g.GenerateExpression(e.Right)
+		if err != nil {
+			return "", err
+		}
+
+		operator, err := cppBinaryOperator(e.Operator)
+		if err != nil {
+			return "", err
+		}
+		return "(" + left + " " + operator + " " + right + ")", nil
 	default:
 		return "", fmt.Errorf("unsupported expression type %T", e)
 	}

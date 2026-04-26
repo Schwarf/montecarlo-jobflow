@@ -72,3 +72,76 @@ func TestCppCodeGeneratorGenerateVariableExpression(t *testing.T) {
 		t.Fatalf("expected %q, got %q", expected, code)
 	}
 }
+
+func TestCppCodeGeneratorGenerateBinaryExpression(t *testing.T) {
+	tests := []struct {
+		name     string
+		expr     Expression
+		expected string
+	}{
+		{
+			name: "addition",
+			expr: &BinaryExpression{
+				Left:     &VariableExpression{Name: "x"},
+				Operator: TokenPlus,
+				Right:    &VariableExpression{Name: "y"},
+			},
+			expected: "(x + y)",
+		},
+		{
+			name: "subtraction",
+			expr: &BinaryExpression{
+				Left:     &VariableExpression{Name: "x"},
+				Operator: TokenMinus,
+				Right:    &NumberExpression{Value: "1.0"},
+			},
+			expected: "(x - 1.0)",
+		},
+		{
+			name: "multiplication",
+			expr: &BinaryExpression{
+				Left:     &VariableExpression{Name: "x"},
+				Operator: TokenMultiply,
+				Right:    &VariableExpression{Name: "y"},
+			},
+			expected: "(x * y)",
+		},
+		{
+			name: "division",
+			expr: &BinaryExpression{
+				Left:     &VariableExpression{Name: "x"},
+				Operator: TokenDivide,
+				Right:    &VariableExpression{Name: "y"},
+			},
+			expected: "(x / y)",
+		},
+		{
+			name: "nested expression",
+			expr: &BinaryExpression{
+				Left: &BinaryExpression{
+					Left:     &VariableExpression{Name: "x"},
+					Operator: TokenPlus,
+					Right:    &VariableExpression{Name: "y"},
+				},
+				Operator: TokenMultiply,
+				Right:    &VariableExpression{Name: "z"},
+			},
+			expected: "((x + y) * z)",
+		},
+	}
+
+	generator := &CppCodeGenerator{}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			code, err := generator.GenerateExpression(tt.expr)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if code != tt.expected {
+				t.Fatalf("expected %q, got %q", tt.expected, code)
+			}
+		})
+	}
+}
