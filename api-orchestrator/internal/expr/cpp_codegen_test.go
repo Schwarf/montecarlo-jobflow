@@ -595,7 +595,7 @@ func TestCppCodeGeneratorGenerateSource(t *testing.T) {
 
 	result := &VariableExpression{Name: "h1"}
 
-	code, err := generator.GenerateSource(
+	code, err := generator.GenerateIntegrandHeader(
 		"evaluate",
 		[]string{"x"},
 		assignments,
@@ -605,7 +605,9 @@ func TestCppCodeGeneratorGenerateSource(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	expected := "#include <cmath>\n\n" +
+	expected := "#pragma once\n\n" +
+		"#include <array>\n" +
+		"#include <cmath>\n\n" +
 		"template <int dimension>\n" +
 		"double evaluate(const std::array<double, dimension>& sample, void* param) {\n" +
 		"    (void)param;\n\n" +

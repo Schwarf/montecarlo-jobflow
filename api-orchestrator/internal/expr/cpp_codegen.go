@@ -8,7 +8,7 @@ import (
 
 type CppCodeGenerator struct{}
 
-func (g *CppCodeGenerator) GenerateSource(
+func (g *CppCodeGenerator) GenerateIntegrandHeader(
 	functionName string,
 	variableNames []string,
 	assignments []assignment,
@@ -18,10 +18,14 @@ func (g *CppCodeGenerator) GenerateSource(
 	if err != nil {
 		return "", err
 	}
+
 	var builder strings.Builder
 
+	builder.WriteString("#pragma once\n\n")
+	builder.WriteString("#include <array>\n")
 	builder.WriteString("#include <cmath>\n\n")
 	builder.WriteString(functionCode)
+
 	return builder.String(), nil
 }
 
