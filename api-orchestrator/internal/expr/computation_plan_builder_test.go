@@ -583,3 +583,45 @@ func TestComputationPlanBuilderBuildInverseSquareOfSin(t *testing.T) {
 		t.Fatalf("expected third assignment 1/h2, got %#v", b.Assignments[2].Expr)
 	}
 }
+
+func TestComputationPlanBuilderBuildFourthPower(t *testing.T) {
+	var b ComputationPlanBuilder
+
+	expr := &BinaryExpression{
+		Left:     &VariableExpression{Name: "x"},
+		Operator: TokenPower,
+		Right:    &NumberExpression{Value: "4"},
+	}
+
+	expected := &VariableExpression{Name: "h2"}
+
+	result := b.Build(expr)
+
+	if !reflect.DeepEqual(result, expected) {
+		t.Fatalf("expected expression h2, got %#v", result)
+	}
+
+	if len(b.Assignments) != 2 {
+		t.Fatalf("expected 2 assignments, got %d", len(b.Assignments))
+	}
+
+	expectedAssignment1 := &BinaryExpression{
+		Left:     &VariableExpression{Name: "x"},
+		Operator: TokenMultiply,
+		Right:    &VariableExpression{Name: "x"},
+	}
+
+	expectedAssignment2 := &BinaryExpression{
+		Left:     &VariableExpression{Name: "h1"},
+		Operator: TokenMultiply,
+		Right:    &VariableExpression{Name: "h1"},
+	}
+
+	if !reflect.DeepEqual(b.Assignments[0].Expr, expectedAssignment1) {
+		t.Fatalf("expected first assignment x*x, got %#v", b.Assignments[0].Expr)
+	}
+
+	if !reflect.DeepEqual(b.Assignments[1].Expr, expectedAssignment2) {
+		t.Fatalf("expected second assignment h1*h1, got %#v", b.Assignments[1].Expr)
+	}
+}

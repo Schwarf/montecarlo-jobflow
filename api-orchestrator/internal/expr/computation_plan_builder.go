@@ -1,6 +1,8 @@
 package expr
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Assignment struct {
 	Name string
@@ -68,6 +70,37 @@ func (b *ComputationPlanBuilder) SimplifyPowerOfMinusOne(expr *BinaryExpression)
 	return b.AssignToTempVariable(div), true
 }
 
+func (b *ComputationPlanBuilder) BuildPositiveIntegerPower(base Expression, n int) Expression {
+	if n <= 0 {
+		panic("BuildPositiveIntegerPower requires n >= 1")
+	}
+
+	if n == 1 {
+		return base
+	}
+
+	if n == 2 {
+		mul := &BinaryExpression{
+			Left:     base,
+			Operator: TokenMultiply,
+			Right:    base,
+		}
+		return b.AssignToTempVariable(mul)
+	}
+
+	if (n & 1) == 0 {
+		half := b.BuildPositiveIntegerPower(base, n/2)
+		mul := &BinaryExpression{
+			Left:     half,
+			Operator: TokenMultiply,
+			Right:    half,
+		}
+		return b.AssignToTempVariable(mul)
+	}
+
+	panic("odd exponents > 1 not implemented yet")
+}
+
 func (b *ComputationPlanBuilder) BuildSquare(expr *BinaryExpression) (Expression, bool) {
 	if expr.Operator != TokenPower {
 		return nil, false
@@ -78,16 +111,7 @@ func (b *ComputationPlanBuilder) BuildSquare(expr *BinaryExpression) (Expression
 		return nil, false
 	}
 
-	base := b.Build(expr.Left)
-	base = b.AssignNonTrivialToTempVariable(base)
-
-	mul := &BinaryExpression{
-		Left:     base,
-		Operator: TokenMultiply,
-		Right:    base,
-	}
-
-	return b.AssignToTempVariable(mul), true
+	return b.BuildPositiveIntegerPower(expr.Left, val), true
 }
 
 func (b *ComputationPlanBuilder) BuildInverseSquare(expr *BinaryExpression) (Expression, bool) {
@@ -127,17 +151,19 @@ func (b *ComputationPlanBuilder) Build(expr Expression) Expression {
 		if ok {
 			return one
 		}
-		square, ok := b.BuildSquare(e)
-		if ok {
-			return square
-		}
-		inverse, ok := b.SimplifyPowerOfMinusOne(e)
-		if ok {
-			return inverse
-		}
+
 		inverseSquare, ok := b.BuildInverseSquare(e)
 		if ok {
 			return inverseSquare
+		}
+
+		if e.Operator == TokenPower {
+			n, ok := IntegerLiteralValue(e.Right)
+			if ok && n > 0 {
+				base := b.Build(e.Left)
+				base = b.AssignNonTrivialToTempVariable(base)
+				return b.BuildPositiveIntegerPower(base, n)
+			}
 		}
 
 		left := b.Build(e.Left)
