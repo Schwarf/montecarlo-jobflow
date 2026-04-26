@@ -142,7 +142,7 @@ func (g *CppCodeGenerator) GenerateExpression(expr Expression) (string, error) {
 			return "", err
 		}
 
-		args := make([]string, len(e.Arguments))
+		args := make([]string, 0, len(e.Arguments))
 		for _, arg := range e.Arguments {
 			code, err := g.GenerateExpression(arg)
 			if err != nil {
