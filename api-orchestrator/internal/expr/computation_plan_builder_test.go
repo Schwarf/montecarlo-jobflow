@@ -330,7 +330,7 @@ func TestComputationPlanBuilderBuildSinSquared(t *testing.T) {
 	}
 }
 
-func TestComputationPlanBuilderBuildLeavesCubeUnchanged(t *testing.T) {
+func TestComputationPlanBuilderBuildCube(t *testing.T) {
 	var b ComputationPlanBuilder
 
 	expr := &BinaryExpression{
@@ -339,14 +339,44 @@ func TestComputationPlanBuilderBuildLeavesCubeUnchanged(t *testing.T) {
 		Right:    &NumberExpression{Value: "3"},
 	}
 
+	expected := &VariableExpression{Name: "h2"}
+
 	result := b.Build(expr)
 
-	if !reflect.DeepEqual(result, expr) {
-		t.Fatalf("expected expression to stay unchanged, got %#v", result)
+	if !reflect.DeepEqual(result, expected) {
+		t.Fatalf("expected expression h2, got %#v", result)
 	}
 
-	if len(b.Assignments) != 0 {
-		t.Fatalf("expected 0 assignments, got %d", len(b.Assignments))
+	if len(b.Assignments) != 2 {
+		t.Fatalf("expected 2 assignments, got %d", len(b.Assignments))
+	}
+
+	if b.Assignments[0].Name != "h1" {
+		t.Fatalf("expected first assignment name h1, got %q", b.Assignments[0].Name)
+	}
+
+	if b.Assignments[1].Name != "h2" {
+		t.Fatalf("expected second assignment name h2, got %q", b.Assignments[1].Name)
+	}
+
+	expectedAssignment1 := &BinaryExpression{
+		Left:     &VariableExpression{Name: "x"},
+		Operator: TokenMultiply,
+		Right:    &VariableExpression{Name: "x"},
+	}
+
+	expectedAssignment2 := &BinaryExpression{
+		Left:     &VariableExpression{Name: "h1"},
+		Operator: TokenMultiply,
+		Right:    &VariableExpression{Name: "x"},
+	}
+
+	if !reflect.DeepEqual(b.Assignments[0].Expr, expectedAssignment1) {
+		t.Fatalf("expected first assignment x*x, got %#v", b.Assignments[0].Expr)
+	}
+
+	if !reflect.DeepEqual(b.Assignments[1].Expr, expectedAssignment2) {
+		t.Fatalf("expected second assignment h1*x, got %#v", b.Assignments[1].Expr)
 	}
 }
 

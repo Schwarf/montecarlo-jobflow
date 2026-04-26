@@ -117,7 +117,10 @@ func (b *ComputationPlanBuilder) BuildSquare(expr *BinaryExpression) (Expression
 		return nil, false
 	}
 
-	return b.BuildPositiveIntegerPower(expr.Left, val), true
+	base := b.Build(expr.Left)
+	base = b.AssignNonTrivialToTempVariable(base)
+
+	return b.BuildPositiveIntegerPower(base, val), true
 }
 
 func (b *ComputationPlanBuilder) BuildInverseSquare(expr *BinaryExpression) (Expression, bool) {
@@ -161,11 +164,6 @@ func (b *ComputationPlanBuilder) Build(expr Expression) Expression {
 		if ok {
 			return inverse
 		}
-		inverseSquare, ok := b.BuildInverseSquare(e)
-		if ok {
-			return inverseSquare
-		}
-
 		if e.Operator == TokenPower {
 			n, ok := IntegerLiteralValue(e.Right)
 			if ok && n > 0 {
@@ -173,6 +171,11 @@ func (b *ComputationPlanBuilder) Build(expr Expression) Expression {
 				base = b.AssignNonTrivialToTempVariable(base)
 				return b.BuildPositiveIntegerPower(base, n)
 			}
+		}
+
+		inverseSquare, ok := b.BuildInverseSquare(e)
+		if ok {
+			return inverseSquare
 		}
 
 		left := b.Build(e.Left)
