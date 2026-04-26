@@ -16,8 +16,9 @@ func TestComputationPlanBuilderNewTempVariable(t *testing.T) {
 	}
 }
 
-func TestComputationPlanBuilderAssignToTempVariable(t *testing.T) {
+func TestComputationPlanBuilderAssignOrReuseTempVariableCreatesAssignment(t *testing.T) {
 	var b ComputationPlanBuilder
+	b.memo = make(map[string]*VariableExpression)
 
 	expr := &BinaryExpression{
 		Left:     &VariableExpression{Name: "x"},
@@ -25,7 +26,7 @@ func TestComputationPlanBuilderAssignToTempVariable(t *testing.T) {
 		Right:    &VariableExpression{Name: "x"},
 	}
 
-	result := b.assignToTempVariable(expr)
+	result := b.assignOrReuseTempVariable(expr)
 
 	if result.Name != "h1" {
 		t.Fatalf("expected returned variable name h1, got %q", result.Name)
@@ -39,13 +40,14 @@ func TestComputationPlanBuilderAssignToTempVariable(t *testing.T) {
 		t.Fatalf("expected assignment name h1, got %q", b.Assignments[0].Name)
 	}
 
-	if b.Assignments[0].Expr != expr {
-		t.Fatal("expected emitted expression to be stored unchanged")
+	if !reflect.DeepEqual(b.Assignments[0].Expr, expr) {
+		t.Fatalf("expected stored expression x*x, got %#v", b.Assignments[0].Expr)
 	}
 }
 
-func TestComputationPlanBuilderMultipleAssignments(t *testing.T) {
+func TestComputationPlanBuilderAssignOrReuseTempVariableMultipleAssignments(t *testing.T) {
 	var b ComputationPlanBuilder
+	b.memo = make(map[string]*VariableExpression)
 
 	expr1 := &BinaryExpression{
 		Left:     &VariableExpression{Name: "x"},
@@ -59,8 +61,8 @@ func TestComputationPlanBuilderMultipleAssignments(t *testing.T) {
 		Right:    &VariableExpression{Name: "h1"},
 	}
 
-	result1 := b.assignToTempVariable(expr1)
-	result2 := b.assignToTempVariable(expr2)
+	result1 := b.assignOrReuseTempVariable(expr1)
+	result2 := b.assignOrReuseTempVariable(expr2)
 
 	if result1.Name != "h1" {
 		t.Fatalf("expected first returned variable name h1, got %q", result1.Name)
@@ -80,11 +82,11 @@ func TestComputationPlanBuilderMultipleAssignments(t *testing.T) {
 		t.Fatalf("expected second assignment name h2, got %q", b.Assignments[1].Name)
 	}
 
-	if b.Assignments[0].Expr != expr1 {
-		t.Fatal("expected first emitted expression to be stored unchanged")
+	if !reflect.DeepEqual(b.Assignments[0].Expr, expr1) {
+		t.Fatalf("expected first stored expression x*x, got %#v", b.Assignments[0].Expr)
 	}
-	if b.Assignments[1].Expr != expr2 {
-		t.Fatal("expected second emitted expression to be stored unchanged")
+	if !reflect.DeepEqual(b.Assignments[1].Expr, expr2) {
+		t.Fatalf("expected second stored expression 1/h1, got %#v", b.Assignments[1].Expr)
 	}
 }
 

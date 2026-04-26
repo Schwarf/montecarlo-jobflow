@@ -12,6 +12,7 @@ type assignment struct {
 type ComputationPlanBuilder struct {
 	tempCounter int
 	Assignments []assignment
+	memo        map[string]*VariableExpression
 }
 
 func (b *ComputationPlanBuilder) newTempVariable() string {
@@ -19,20 +20,30 @@ func (b *ComputationPlanBuilder) newTempVariable() string {
 	return fmt.Sprintf("h%d", b.tempCounter)
 }
 
-func (b *ComputationPlanBuilder) assignToTempVariable(expr Expression) *VariableExpression {
+func (b *ComputationPlanBuilder) assignOrReuseTempVariable(expr Expression) *VariableExpression {
+	if b.memo == nil {
+		b.memo = make(map[string]*VariableExpression)
+	}
+	key := ExpressionKey(expr)
+	if val, ok := b.memo[key]; ok {
+		return val
+	}
+
 	name := b.newTempVariable()
 	b.Assignments = append(b.Assignments, assignment{
 		Name: name,
 		Expr: expr,
 	})
-	return &VariableExpression{Name: name}
+	val := &VariableExpression{Name: name}
+	b.memo[key] = val
+	return val
 }
 
 func (b *ComputationPlanBuilder) assignNonTrivialToTempVariable(expr Expression) Expression {
 	if IsTrivial(expr) {
 		return expr
 	}
-	return b.assignToTempVariable(expr)
+	return b.assignOrReuseTempVariable(expr)
 }
 
 func (b *ComputationPlanBuilder) buildPositiveIntegerPower(base Expression, n int) Expression {
@@ -50,7 +61,7 @@ func (b *ComputationPlanBuilder) buildPositiveIntegerPower(base Expression, n in
 			Operator: TokenMultiply,
 			Right:    base,
 		}
-		return b.assignToTempVariable(mul)
+		return b.assignOrReuseTempVariable(mul)
 	}
 
 	if (n & 1) == 0 {
@@ -60,7 +71,7 @@ func (b *ComputationPlanBuilder) buildPositiveIntegerPower(base Expression, n in
 			Operator: TokenMultiply,
 			Right:    half,
 		}
-		return b.assignToTempVariable(mul)
+		return b.assignOrReuseTempVariable(mul)
 	}
 
 	prev := b.buildPositiveIntegerPower(base, n-1)
@@ -69,7 +80,7 @@ func (b *ComputationPlanBuilder) buildPositiveIntegerPower(base Expression, n in
 		Operator: TokenMultiply,
 		Right:    base,
 	}
-	return b.assignToTempVariable(mul)
+	return b.assignOrReuseTempVariable(mul)
 }
 
 func (b *ComputationPlanBuilder) buildIntegerPower(base Expression, n int) Expression {
@@ -88,7 +99,7 @@ func (b *ComputationPlanBuilder) buildIntegerPower(base Expression, n int) Expre
 		Operator: TokenDivide,
 		Right:    positive,
 	}
-	return b.assignToTempVariable(div)
+	return b.assignOrReuseTempVariable(div)
 }
 
 func (b *ComputationPlanBuilder) Build(expr Expression) Expression {
