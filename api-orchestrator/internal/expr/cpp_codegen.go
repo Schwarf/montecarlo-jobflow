@@ -14,7 +14,7 @@ func (g *CppCodeGenerator) GenerateIntegrandHeader(
 	assignments []assignment,
 	result Expression,
 ) (string, error) {
-	functionCode, err := g.GenerateComputationPlanFunction(functionName, variableNames, assignments, result)
+	functionCode, err := g.GenerateVegasFunction(functionName, variableNames, assignments, result)
 	if err != nil {
 		return "", err
 	}
@@ -29,7 +29,7 @@ func (g *CppCodeGenerator) GenerateIntegrandHeader(
 	return builder.String(), nil
 }
 
-func (g *CppCodeGenerator) GenerateComputationPlanFunction(
+func (g *CppCodeGenerator) GenerateVegasFunction(
 	functionName string,
 	variableNames []string,
 	assignments []assignment,

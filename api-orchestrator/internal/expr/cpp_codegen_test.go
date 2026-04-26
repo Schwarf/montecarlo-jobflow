@@ -453,7 +453,7 @@ func TestCppCodeGeneratorGenerateComputationPlanFunction(t *testing.T) {
 		Right:    &VariableExpression{Name: "h2"},
 	}
 
-	code, err := generator.GenerateComputationPlanFunction(
+	code, err := generator.GenerateVegasFunction(
 		"evaluate",
 		[]string{"x", "y"},
 		assignments,
@@ -490,7 +490,7 @@ func TestCppCodegenPipelineRepeatedOptimizedSubexpressions(t *testing.T) {
 
 	generator := &CppCodeGenerator{}
 
-	code, err := generator.GenerateComputationPlanFunction(
+	code, err := generator.GenerateVegasFunction(
 		"evaluate",
 		[]string{"x", "y"},
 		planBuilder.Assignments,
