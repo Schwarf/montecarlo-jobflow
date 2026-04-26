@@ -7,7 +7,7 @@ import (
 
 type CppCodeGenerator struct{}
 
-func (g CppCodeGenerator) GenerateFunction(functionName string, variableNames []string, returnExpression string) (string, error) {
+func (g *CppCodeGenerator) GenerateFunction(functionName string, variableNames []string, returnExpression string) (string, error) {
 	if functionName == "" {
 		return "", fmt.Errorf("function name must not be empty")
 	}
@@ -34,4 +34,15 @@ func (g CppCodeGenerator) GenerateFunction(functionName string, variableNames []
 	builder.WriteString("}\n")
 
 	return builder.String(), nil
+}
+
+func (g *CppCodeGenerator) GenerateExpression(expr Expression) (string, error) {
+	switch e := expr.(type) {
+	case *NumberExpression:
+		return e.Value, nil
+	case *VariableExpression:
+		return e.Name, nil
+	default:
+		return "", fmt.Errorf("unsupported expression type %T", e)
+	}
 }

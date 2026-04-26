@@ -3,7 +3,7 @@ package expr
 import "testing"
 
 func TestCppCodeGeneratorGenerateFunctionWithoutVariables(t *testing.T) {
-	generator := CppCodeGenerator{}
+	generator := &CppCodeGenerator{}
 
 	code, err := generator.GenerateFunction("evaluate", nil, "1.0")
 	if err != nil {
@@ -20,7 +20,7 @@ func TestCppCodeGeneratorGenerateFunctionWithoutVariables(t *testing.T) {
 }
 
 func TestCppCodeGeneratorGenerateFunctionWithVariables(t *testing.T) {
-	generator := CppCodeGenerator{}
+	generator := &CppCodeGenerator{}
 
 	code, err := generator.GenerateFunction("evaluate", []string{"x", "y", "z"}, "x + y + z")
 	if err != nil {
@@ -37,10 +37,38 @@ func TestCppCodeGeneratorGenerateFunctionWithVariables(t *testing.T) {
 }
 
 func TestCppCodeGeneratorRejectsEmptyFunctionName(t *testing.T) {
-	generator := CppCodeGenerator{}
+	generator := &CppCodeGenerator{}
 
 	_, err := generator.GenerateFunction("", []string{"x"}, "x")
 	if err == nil {
 		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestCppCodeGeneratorGenerateNumberExpression(t *testing.T) {
+	generator := &CppCodeGenerator{}
+
+	code, err := generator.GenerateExpression(&NumberExpression{Value: "1.23"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expected := "1.23"
+	if code != expected {
+		t.Fatalf("expected %q, got %q", expected, code)
+	}
+}
+
+func TestCppCodeGeneratorGenerateVariableExpression(t *testing.T) {
+	generator := &CppCodeGenerator{}
+
+	code, err := generator.GenerateExpression(&VariableExpression{Name: "x"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expected := "x"
+	if code != expected {
+		t.Fatalf("expected %q, got %q", expected, code)
 	}
 }
