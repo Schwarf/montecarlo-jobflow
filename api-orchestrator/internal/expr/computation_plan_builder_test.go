@@ -103,10 +103,7 @@ func TestComputationPlanBuilderBuildSquare(t *testing.T) {
 		Right:    &VariableExpression{Name: "x"},
 	}
 
-	result, ok := b.BuildSquare(expr1)
-	if !ok {
-		t.Fatal("expected a square")
-	}
+	result := b.Build(expr1)
 
 	variable, ok := result.(*VariableExpression)
 	if !ok {

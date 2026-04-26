@@ -35,41 +35,6 @@ func (b *ComputationPlanBuilder) AssignNonTrivialToTempVariable(expr Expression)
 	return b.AssignToTempVariable(expr)
 }
 
-func (b *ComputationPlanBuilder) SimplifyPowerOfOne(expr *BinaryExpression) (Expression, bool) {
-	if expr.Operator != TokenPower {
-		return nil, false
-	}
-
-	val, ok := IntegerLiteralValue(expr.Right)
-	if !ok || val != 1 {
-		return nil, false
-	}
-
-	return b.Build(expr.Left), true
-}
-
-func (b *ComputationPlanBuilder) SimplifyPowerOfMinusOne(expr *BinaryExpression) (Expression, bool) {
-	if expr.Operator != TokenPower {
-		return nil, false
-	}
-
-	val, ok := IntegerLiteralValue(expr.Right)
-	if !ok || val != -1 {
-		return nil, false
-	}
-
-	base := b.Build(expr.Left)
-	base = b.AssignNonTrivialToTempVariable(base)
-
-	div := &BinaryExpression{
-		Left:     &NumberExpression{Value: "1"},
-		Operator: TokenDivide,
-		Right:    base,
-	}
-
-	return b.AssignToTempVariable(div), true
-}
-
 func (b *ComputationPlanBuilder) BuildPositiveIntegerPower(base Expression, n int) Expression {
 	if n <= 0 {
 		panic("BuildPositiveIntegerPower requires n >= 1")
@@ -107,52 +72,6 @@ func (b *ComputationPlanBuilder) BuildPositiveIntegerPower(base Expression, n in
 	return b.AssignToTempVariable(mul)
 }
 
-func (b *ComputationPlanBuilder) BuildSquare(expr *BinaryExpression) (Expression, bool) {
-	if expr.Operator != TokenPower {
-		return nil, false
-	}
-
-	val, ok := IntegerLiteralValue(expr.Right)
-	if !ok || val != 2 {
-		return nil, false
-	}
-
-	base := b.Build(expr.Left)
-	base = b.AssignNonTrivialToTempVariable(base)
-
-	return b.BuildPositiveIntegerPower(base, val), true
-}
-
-func (b *ComputationPlanBuilder) BuildInverseSquare(expr *BinaryExpression) (Expression, bool) {
-	if expr.Operator != TokenPower {
-		return nil, false
-	}
-
-	val, ok := IntegerLiteralValue(expr.Right)
-	if !ok || val != -2 {
-		return nil, false
-	}
-
-	squareExpr := &BinaryExpression{
-		Left:     expr.Left,
-		Operator: TokenPower,
-		Right:    &NumberExpression{Value: "2"},
-	}
-
-	squared, ok := b.BuildSquare(squareExpr)
-	if !ok {
-		return nil, false
-	}
-
-	div := &BinaryExpression{
-		Left:     &NumberExpression{Value: "1"},
-		Operator: TokenDivide,
-		Right:    squared,
-	}
-
-	return b.AssignToTempVariable(div), true
-}
-
 func (b *ComputationPlanBuilder) BuildIntegerPower(base Expression, n int) Expression {
 	if n == 0 {
 		panic("power 0 not implemented")
@@ -182,11 +101,6 @@ func (b *ComputationPlanBuilder) Build(expr Expression) Expression {
 				base = b.AssignNonTrivialToTempVariable(base)
 				return b.BuildIntegerPower(base, n)
 			}
-		}
-
-		inverseSquare, ok := b.BuildInverseSquare(e)
-		if ok {
-			return inverseSquare
 		}
 
 		left := b.Build(e.Left)
