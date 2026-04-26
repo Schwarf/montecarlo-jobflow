@@ -72,6 +72,17 @@ func cppFunctionName(name string) (string, error) {
 	}
 }
 
+func cppIdentifier(name string) string {
+	switch name {
+	case "Pi":
+		return "3.141592653589793238462643383279502884"
+	case "E":
+		return "2.718281828459045235360287471352662498"
+	default:
+		return name
+	}
+}
+
 func (g *CppCodeGenerator) GenerateFunction(functionName string, variableNames []string, returnExpression string) (string, error) {
 	if functionName == "" {
 		return "", fmt.Errorf("function name must not be empty")
@@ -106,7 +117,7 @@ func (g *CppCodeGenerator) GenerateExpression(expr Expression) (string, error) {
 	case *NumberExpression:
 		return e.Value, nil
 	case *VariableExpression:
-		return e.Name, nil
+		return cppIdentifier(e.Name), nil
 	case *BinaryExpression:
 		left, err := g.GenerateExpression(e.Left)
 		if err != nil {

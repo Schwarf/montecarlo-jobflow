@@ -432,3 +432,37 @@ func TestCppCodeGeneratorRejectsUnsupportedFunction(t *testing.T) {
 		t.Fatal("expected error, got nil")
 	}
 }
+
+func TestCppCodeGeneratorGenerateBuiltInConstants(t *testing.T) {
+	tests := []struct {
+		name     string
+		expr     Expression
+		expected string
+	}{
+		{
+			name:     "Pi",
+			expr:     &VariableExpression{Name: "Pi"},
+			expected: "3.141592653589793238462643383279502884",
+		},
+		{
+			name:     "E",
+			expr:     &VariableExpression{Name: "E"},
+			expected: "2.718281828459045235360287471352662498",
+		},
+	}
+
+	generator := &CppCodeGenerator{}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			code, err := generator.GenerateExpression(tt.expr)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if code != tt.expected {
+				t.Fatalf("expected %q, got %q", tt.expected, code)
+			}
+		})
+	}
+}
