@@ -98,7 +98,13 @@ func (b *ComputationPlanBuilder) BuildPositiveIntegerPower(base Expression, n in
 		return b.AssignToTempVariable(mul)
 	}
 
-	panic("odd exponents > 1 not implemented yet")
+	prev := b.BuildPositiveIntegerPower(base, n-1)
+	mul := &BinaryExpression{
+		Left:     prev,
+		Operator: TokenMultiply,
+		Right:    base,
+	}
+	return b.AssignToTempVariable(mul)
 }
 
 func (b *ComputationPlanBuilder) BuildSquare(expr *BinaryExpression) (Expression, bool) {
@@ -151,7 +157,10 @@ func (b *ComputationPlanBuilder) Build(expr Expression) Expression {
 		if ok {
 			return one
 		}
-
+		inverse, ok := b.SimplifyPowerOfMinusOne(e)
+		if ok {
+			return inverse
+		}
 		inverseSquare, ok := b.BuildInverseSquare(e)
 		if ok {
 			return inverseSquare
