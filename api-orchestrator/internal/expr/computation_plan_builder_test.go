@@ -8,10 +8,10 @@ import (
 func TestComputationPlanBuilderNewTempVariable(t *testing.T) {
 	var b ComputationPlanBuilder
 
-	if got := b.NewTempVariable(); got != "h1" {
+	if got := b.newTempVariable(); got != "h1" {
 		t.Fatalf("expected h1, got %q", got)
 	}
-	if got := b.NewTempVariable(); got != "h2" {
+	if got := b.newTempVariable(); got != "h2" {
 		t.Fatalf("expected h2, got %q", got)
 	}
 }
@@ -25,7 +25,7 @@ func TestComputationPlanBuilderAssignToTempVariable(t *testing.T) {
 		Right:    &VariableExpression{Name: "x"},
 	}
 
-	result := b.AssignToTempVariable(expr)
+	result := b.assignToTempVariable(expr)
 
 	if result.Name != "h1" {
 		t.Fatalf("expected returned variable name h1, got %q", result.Name)
@@ -59,8 +59,8 @@ func TestComputationPlanBuilderMultipleAssignments(t *testing.T) {
 		Right:    &VariableExpression{Name: "h1"},
 	}
 
-	result1 := b.AssignToTempVariable(expr1)
-	result2 := b.AssignToTempVariable(expr2)
+	result1 := b.assignToTempVariable(expr1)
+	result2 := b.assignToTempVariable(expr2)
 
 	if result1.Name != "h1" {
 		t.Fatalf("expected first returned variable name h1, got %q", result1.Name)
@@ -227,7 +227,7 @@ func TestComputationPlanBuilderAssignNonTrivialToTempVariable(t *testing.T) {
 
 	expr := &FunctionCallExpression{Name: "sin", Arguments: []Expression{&VariableExpression{Name: "x"}}}
 
-	result := b.AssignNonTrivialToTempVariable(expr)
+	result := b.assignNonTrivialToTempVariable(expr)
 	variable, ok := result.(*VariableExpression)
 	if !ok {
 		t.Fatalf("expected *VariableExpression, got %T", result)
@@ -255,7 +255,7 @@ func TestComputationPlanBuilderAssignNonTrivialToTempVariableTrivialCase(t *test
 
 	expr := &VariableExpression{Name: "x"}
 
-	result := b.AssignNonTrivialToTempVariable(expr)
+	result := b.assignNonTrivialToTempVariable(expr)
 
 	variable, ok := result.(*VariableExpression)
 	if !ok {
@@ -864,7 +864,7 @@ func TestComputationPlanBuilderBuildComplexMixedExpression(t *testing.T) {
 		t.Fatalf("expected 9 assignments, got %d", len(b.Assignments))
 	}
 
-	expectedAssignments := []Assignment{
+	expectedAssignments := []assignment{
 		{
 			Name: "h1",
 			Expr: &BinaryExpression{
