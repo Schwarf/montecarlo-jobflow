@@ -372,6 +372,35 @@ func TestCppCodeGeneratorGenerateFunctionCallExpression(t *testing.T) {
 			},
 			expected: "std::exp(x)",
 		},
+		{
+			name: "function call with binary expression argument",
+			expr: &FunctionCallExpression{
+				Name: "exp",
+				Arguments: []Expression{
+					&BinaryExpression{
+						Left:     &VariableExpression{Name: "x"},
+						Operator: TokenPlus,
+						Right:    &NumberExpression{Value: "1.0"},
+					},
+				},
+			},
+			expected: "std::exp((x + 1.0))",
+		},
+		{
+			name: "nested function call",
+			expr: &FunctionCallExpression{
+				Name: "sin",
+				Arguments: []Expression{
+					&FunctionCallExpression{
+						Name: "ln",
+						Arguments: []Expression{
+							&VariableExpression{Name: "x"},
+						},
+					},
+				},
+			},
+			expected: "std::sin(std::log(x))",
+		},
 	}
 	generator := &CppCodeGenerator{}
 
@@ -386,5 +415,20 @@ func TestCppCodeGeneratorGenerateFunctionCallExpression(t *testing.T) {
 				t.Fatalf("expected %q, got %q", tt.expected, code)
 			}
 		})
+	}
+}
+
+func TestCppCodeGeneratorRejectsUnsupportedFunction(t *testing.T) {
+	generator := &CppCodeGenerator{}
+
+	_, err := generator.GenerateExpression(&FunctionCallExpression{
+		Name: "foo",
+		Arguments: []Expression{
+			&VariableExpression{Name: "x"},
+		},
+	})
+
+	if err == nil {
+		t.Fatal("expected error, got nil")
 	}
 }
