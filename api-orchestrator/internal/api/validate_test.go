@@ -198,3 +198,5 @@ func TestValidationComponentsValidIntegrand(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 }
+
+// TODO more tests involving ValidateSemantics
