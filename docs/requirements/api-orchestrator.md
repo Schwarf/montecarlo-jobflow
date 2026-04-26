@@ -163,6 +163,53 @@ The API orchestrator provides:
 - **API-050** [implemented] [manually-tested]  
   The API orchestrator shall prioritize ease of local development.
 
+## Computation Plan Requirements
+
+- **API-051** [implemented] [automated-test-covered]  
+  The API orchestrator shall transform parsed integrand expressions into an internal computation plan representation.
+
+- **API-052** [implemented] [automated-test-covered]  
+  The API orchestrator shall optimize positive integer power expressions into multiplication-based computation steps.
+
+- **API-053** [implemented] [automated-test-covered]  
+  The API orchestrator shall optimize negative integer power expressions into multiplication-based computation steps followed by reciprocal computation.
+
+- **API-054** [implemented] [automated-test-covered]  
+  The API orchestrator shall simplify zero powers to the numeric constant `1` in the internal computation plan.
+
+- **API-055** [implemented] [automated-test-covered]  
+  The API orchestrator shall preserve non-integer exponent expressions for generic power handling when no integer-power optimization applies.
+
+- **API-056** [implemented] [automated-test-covered]  
+  The API orchestrator shall introduce helper variables for intermediate computation steps in the internal computation plan.
+
+- **API-057** [implemented] [automated-test-covered]  
+  The API orchestrator shall reuse helper variables for repeated equivalent optimized subexpressions within one integrand.
+
+- **API-058** [implemented] [automated-test-covered]  
+  The API orchestrator shall optimize integer powers for simple variable bases.
+
+- **API-059** [implemented] [automated-test-covered]  
+  The API orchestrator shall optimize integer powers for non-trivial bases such as function calls and compound subexpressions.
+
+- **API-060** [implemented] [automated-test-covered]  
+  The API orchestrator shall optimize integer powers recursively inside compound expressions.
+
+- **API-061** [implemented] [automated-test-covered]  
+  The API orchestrator shall optimize integer powers recursively inside function arguments.
+
+- **API-062** [implemented] [automated-test-covered]  
+  The API orchestrator shall optimize integer powers recursively inside unary expressions.
+
+- **API-063** [implemented] [automated-test-covered]  
+  The API orchestrator shall support repeated-subexpression reuse across multiple branches of one integrand expression.
+
+- **API-064** [implemented] [automated-test-covered]  
+  The API orchestrator shall support internal expression keys for recognizing structurally equivalent optimized subexpressions.
+
+- **API-065** [implemented] [automated-test-covered]  
+  The API orchestrator shall assign deterministic helper-variable names within one computation plan build.
+
 ## Current Limitations / Later Extensions
 
 The initial API orchestrator does not yet need to provide:
