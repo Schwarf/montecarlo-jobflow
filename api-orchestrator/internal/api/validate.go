@@ -2,7 +2,6 @@ package api
 
 import (
 	"fmt"
-	"strings"
 	"unicode"
 
 	"github.com/Schwarf/montecarlo-jobflow/api-orchestrator/internal/expr"
@@ -46,32 +45,13 @@ func (r *CreateJobRequest) ValidateBasic() error {
 }
 
 func (r *CreateJobRequest) ValidateSemantics() error {
-	tokens, err := expr.LexAll(r.Integrand)
-	if err != nil {
-		return err
-	}
-
-	parser := expr.NewParser(tokens)
-	expression, err := parser.Parse()
-	if err != nil {
-		return err
-	}
-
 	context := expr.DefaultValidationContext()
 	for _, variable := range r.IntegrationVariables {
 		context.UserVariables[variable.Name] = struct{}{}
 	}
 
-	validationErrors := expr.Validate(expression, context)
-	if len(validationErrors) > 0 {
-		var messages []string
-		for _, ve := range validationErrors {
-			messages = append(messages, ve.Message)
-		}
-		return fmt.Errorf("semantic validation failed: %s", strings.Join(messages, "; "))
-	}
-
-	return nil
+	_, err := expr.ParseAndValidate(r.Integrand, context)
+	return err
 }
 
 func isValidIdentifier(s string) bool {
