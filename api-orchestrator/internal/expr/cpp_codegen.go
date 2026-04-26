@@ -33,6 +33,45 @@ func cppUnaryOperator(operator TokenType) (string, error) {
 	}
 }
 
+func cppFunctionName(name string) (string, error) {
+	switch name {
+	case "sin":
+		return "std::sin", nil
+	case "cos":
+		return "std::cos", nil
+	case "tan":
+		return "std::tan", nil
+	case "asin":
+		return "std::asin", nil
+	case "acos":
+		return "std::acos", nil
+	case "atan":
+		return "std::atan", nil
+	case "sinh":
+		return "std::sinh", nil
+	case "cosh":
+		return "std::cosh", nil
+	case "tanh":
+		return "std::tanh", nil
+	case "asinh":
+		return "std::asinh", nil
+	case "acosh":
+		return "std::acosh", nil
+	case "atanh":
+		return "std::atanh", nil
+	case "ln":
+		return "std::log", nil
+	case "log10":
+		return "std::log10", nil
+	case "log2":
+		return "std::log2", nil
+	case "exp":
+		return "std::exp", nil
+	default:
+		return "", fmt.Errorf("unsupported function %q", name)
+	}
+}
+
 func (g *CppCodeGenerator) GenerateFunction(functionName string, variableNames []string, returnExpression string) (string, error) {
 	if functionName == "" {
 		return "", fmt.Errorf("function name must not be empty")
@@ -95,8 +134,23 @@ func (g *CppCodeGenerator) GenerateExpression(expr Expression) (string, error) {
 		if err != nil {
 			return "", err
 		}
-
 		return "(" + operator + right + ")", nil
+
+	case *FunctionCallExpression:
+		functionName, err := cppFunctionName(e.Name)
+		if err != nil {
+			return "", err
+		}
+
+		args := make([]string, len(e.Arguments))
+		for _, arg := range e.Arguments {
+			code, err := g.GenerateExpression(arg)
+			if err != nil {
+				return "", err
+			}
+			args = append(args, code)
+		}
+		return functionName + "(" + strings.Join(args, ",") + ")", nil
 	default:
 		return "", fmt.Errorf("unsupported expression type %T", e)
 	}
