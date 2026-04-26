@@ -22,6 +22,17 @@ func cppBinaryOperator(operator TokenType) (string, error) {
 	}
 }
 
+func cppUnaryOperator(operator TokenType) (string, error) {
+	switch operator {
+	case TokenPlus:
+		return "+", nil
+	case TokenMinus:
+		return "-", nil
+	default:
+		return "", fmt.Errorf("unsupported unary operator %v", operator)
+	}
+}
+
 func (g *CppCodeGenerator) GenerateFunction(functionName string, variableNames []string, returnExpression string) (string, error) {
 	if functionName == "" {
 		return "", fmt.Errorf("function name must not be empty")
@@ -73,6 +84,19 @@ func (g *CppCodeGenerator) GenerateExpression(expr Expression) (string, error) {
 			return "", err
 		}
 		return "(" + left + " " + operator + " " + right + ")", nil
+
+	case *UnaryExpression:
+		right, err := g.GenerateExpression(e.Right)
+		if err != nil {
+			return "", err
+		}
+
+		operator, err := cppUnaryOperator(e.Operator)
+		if err != nil {
+			return "", err
+		}
+
+		return "(" + operator + right + ")", nil
 	default:
 		return "", fmt.Errorf("unsupported expression type %T", e)
 	}

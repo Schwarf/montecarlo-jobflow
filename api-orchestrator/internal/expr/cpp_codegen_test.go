@@ -145,3 +145,63 @@ func TestCppCodeGeneratorGenerateBinaryExpression(t *testing.T) {
 		})
 	}
 }
+
+func TestCppCodeGeneratorGenerateUnaryExpression(t *testing.T) {
+	tests := []struct {
+		name     string
+		expr     Expression
+		expected string
+	}{
+		{
+			name: "unary plus",
+			expr: &UnaryExpression{
+				Operator: TokenPlus,
+				Right:    &VariableExpression{Name: "x"},
+			},
+			expected: "(+x)",
+		},
+		{
+			name: "unary minus",
+			expr: &UnaryExpression{
+				Operator: TokenMinus,
+				Right:    &VariableExpression{Name: "x"},
+			},
+			expected: "(-x)",
+		},
+		{
+			name: "negative number",
+			expr: &UnaryExpression{
+				Operator: TokenMinus,
+				Right:    &NumberExpression{Value: "4"},
+			},
+			expected: "(-4)",
+		},
+		{
+			name: "nested unary around binary",
+			expr: &UnaryExpression{
+				Operator: TokenMinus,
+				Right: &BinaryExpression{
+					Left:     &VariableExpression{Name: "x"},
+					Operator: TokenPlus,
+					Right:    &VariableExpression{Name: "y"},
+				},
+			},
+			expected: "(-(x + y))",
+		},
+	}
+
+	generator := &CppCodeGenerator{}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			code, err := generator.GenerateExpression(tt.expr)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if code != tt.expected {
+				t.Fatalf("expected %q, got %q", tt.expected, code)
+			}
+		})
+	}
+}
