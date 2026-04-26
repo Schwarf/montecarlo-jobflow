@@ -473,3 +473,41 @@ func TestCppCodeGeneratorGenerateComputationPlanFunction(t *testing.T) {
 		t.Fatalf("expected:\n%s\ngot:\n%s", expected, code)
 	}
 }
+
+// TODO: Exact string testing ... rather brittle
+func TestCppCodegenPipelineRepeatedOptimizedSubexpressions(t *testing.T) {
+	expr, err := parseForTest(t, "(1+(x+y)^2)^3/sin(x)^2 + (1+(x+y)^2)^2")
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	planBuilder := &ComputationPlanBuilder{}
+	result := planBuilder.Build(expr)
+
+	generator := &CppCodeGenerator{}
+
+	code, err := generator.GenerateComputationPlanFunction(
+		"evaluate",
+		[]string{"x", "y"},
+		planBuilder.Assignments,
+		result,
+	)
+	if err != nil {
+		t.Fatalf("unexpected codegen error: %v", err)
+	}
+
+	expected := "double evaluate(double x, double y) {\n" +
+		"    const double h1 = (x + y);\n" +
+		"    const double h2 = (h1 * h1);\n" +
+		"    const double h3 = (1 + h2);\n" +
+		"    const double h4 = (h3 * h3);\n" +
+		"    const double h5 = (h4 * h3);\n" +
+		"    const double h6 = std::sin(x);\n" +
+		"    const double h7 = (h6 * h6);\n" +
+		"    return ((h5 / h7) + h4);\n" +
+		"}\n"
+
+	if code != expected {
+		t.Fatalf("expected:\n%s\ngot:\n%s", expected, code)
+	}
+}
