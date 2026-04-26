@@ -1536,3 +1536,325 @@ func TestComputationPlanBuilderBuildPowerOfZero(t *testing.T) {
 		})
 	}
 }
+
+func TestComputationPlanBuilderReusesCompoundBaseSquareAcrossBranches(t *testing.T) {
+	var b ComputationPlanBuilder
+
+	expr := &BinaryExpression{
+		Left: &BinaryExpression{
+			Left: &BinaryExpression{
+				Left: &BinaryExpression{
+					Left: &BinaryExpression{
+						Left:     &NumberExpression{Value: "1"},
+						Operator: TokenPlus,
+						Right:    &VariableExpression{Name: "x"},
+					},
+					Operator: TokenPlus,
+					Right:    &VariableExpression{Name: "y"},
+				},
+				Operator: TokenPower,
+				Right:    &NumberExpression{Value: "3"},
+			},
+			Operator: TokenDivide,
+			Right: &BinaryExpression{
+				Left: &FunctionCallExpression{
+					Name: "tan",
+					Arguments: []Expression{
+						&VariableExpression{Name: "x"},
+					},
+				},
+				Operator: TokenPower,
+				Right:    &NumberExpression{Value: "2"},
+			},
+		},
+		Operator: TokenPlus,
+		Right: &BinaryExpression{
+			Left: &BinaryExpression{
+				Left: &BinaryExpression{
+					Left:     &NumberExpression{Value: "1"},
+					Operator: TokenPlus,
+					Right:    &VariableExpression{Name: "x"},
+				},
+				Operator: TokenPlus,
+				Right:    &VariableExpression{Name: "y"},
+			},
+			Operator: TokenPower,
+			Right:    &NumberExpression{Value: "2"},
+		},
+	}
+
+	result := b.Build(expr)
+
+	top, ok := result.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected top-level *BinaryExpression, got %T", result)
+	}
+	if top.Operator != TokenPlus {
+		t.Fatalf("expected top-level plus, got %v", top.Operator)
+	}
+
+	leftBranch, ok := top.Left.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("expected left branch *BinaryExpression, got %T", top.Left)
+	}
+	if leftBranch.Operator != TokenDivide {
+		t.Fatalf("expected left branch divide, got %v", leftBranch.Operator)
+	}
+
+	cubeVar, ok := leftBranch.Left.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected cube temp on left of divide, got %T", leftBranch.Left)
+	}
+	if cubeVar.Name != "h3" {
+		t.Fatalf("expected cube temp h3, got %q", cubeVar.Name)
+	}
+
+	tanSqVar, ok := leftBranch.Right.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected tan square temp on right of divide, got %T", leftBranch.Right)
+	}
+	if tanSqVar.Name != "h5" {
+		t.Fatalf("expected tan square temp h5, got %q", tanSqVar.Name)
+	}
+
+	reusedSquare, ok := top.Right.(*VariableExpression)
+	if !ok {
+		t.Fatalf("expected reused square temp on right branch, got %T", top.Right)
+	}
+	if reusedSquare.Name != "h2" {
+		t.Fatalf("expected reused square temp h2, got %q", reusedSquare.Name)
+	}
+
+	if len(b.Assignments) != 5 {
+		t.Fatalf("expected 5 assignments, got %d", len(b.Assignments))
+	}
+
+	expectedAssignment1 := &BinaryExpression{
+		Left: &BinaryExpression{
+			Left:     &NumberExpression{Value: "1"},
+			Operator: TokenPlus,
+			Right:    &VariableExpression{Name: "x"},
+		},
+		Operator: TokenPlus,
+		Right:    &VariableExpression{Name: "y"},
+	}
+
+	expectedAssignment2 := &BinaryExpression{
+		Left:     &VariableExpression{Name: "h1"},
+		Operator: TokenMultiply,
+		Right:    &VariableExpression{Name: "h1"},
+	}
+
+	expectedAssignment3 := &BinaryExpression{
+		Left:     &VariableExpression{Name: "h2"},
+		Operator: TokenMultiply,
+		Right:    &VariableExpression{Name: "h1"},
+	}
+
+	expectedAssignment4 := &FunctionCallExpression{
+		Name: "tan",
+		Arguments: []Expression{
+			&VariableExpression{Name: "x"},
+		},
+	}
+
+	expectedAssignment5 := &BinaryExpression{
+		Left:     &VariableExpression{Name: "h4"},
+		Operator: TokenMultiply,
+		Right:    &VariableExpression{Name: "h4"},
+	}
+
+	if b.Assignments[0].Name != "h1" {
+		t.Fatalf("expected first assignment name h1, got %q", b.Assignments[0].Name)
+	}
+	if b.Assignments[1].Name != "h2" {
+		t.Fatalf("expected second assignment name h2, got %q", b.Assignments[1].Name)
+	}
+	if b.Assignments[2].Name != "h3" {
+		t.Fatalf("expected third assignment name h3, got %q", b.Assignments[2].Name)
+	}
+	if b.Assignments[3].Name != "h4" {
+		t.Fatalf("expected fourth assignment name h4, got %q", b.Assignments[3].Name)
+	}
+	if b.Assignments[4].Name != "h5" {
+		t.Fatalf("expected fifth assignment name h5, got %q", b.Assignments[4].Name)
+	}
+
+	if !reflect.DeepEqual(b.Assignments[0].Expr, expectedAssignment1) {
+		t.Fatalf("expected first assignment ((1+x)+y), got %#v", b.Assignments[0].Expr)
+	}
+	if !reflect.DeepEqual(b.Assignments[1].Expr, expectedAssignment2) {
+		t.Fatalf("expected second assignment h1*h1, got %#v", b.Assignments[1].Expr)
+	}
+	if !reflect.DeepEqual(b.Assignments[2].Expr, expectedAssignment3) {
+		t.Fatalf("expected third assignment h2*h1, got %#v", b.Assignments[2].Expr)
+	}
+	if !reflect.DeepEqual(b.Assignments[3].Expr, expectedAssignment4) {
+		t.Fatalf("expected fourth assignment tan(x), got %#v", b.Assignments[3].Expr)
+	}
+	if !reflect.DeepEqual(b.Assignments[4].Expr, expectedAssignment5) {
+		t.Fatalf("expected fifth assignment h4*h4, got %#v", b.Assignments[4].Expr)
+	}
+}
+
+func TestComputationPlanBuilderBuildNestedMixedNegativeCube(t *testing.T) {
+	var b ComputationPlanBuilder
+
+	expr := &BinaryExpression{
+		Left: &BinaryExpression{
+			Left: &BinaryExpression{
+				Left:     &NumberExpression{Value: "1"},
+				Operator: TokenPlus,
+				Right: &BinaryExpression{
+					Left: &BinaryExpression{
+						Left: &BinaryExpression{
+							Left:     &VariableExpression{Name: "x"},
+							Operator: TokenPower,
+							Right:    &NumberExpression{Value: "2"},
+						},
+						Operator: TokenPlus,
+						Right:    &VariableExpression{Name: "y"},
+					},
+					Operator: TokenPower,
+					Right:    &NumberExpression{Value: "3"},
+				},
+			},
+			Operator: TokenPlus,
+			Right: &BinaryExpression{
+				Left: &FunctionCallExpression{
+					Name: "sin",
+					Arguments: []Expression{
+						&VariableExpression{Name: "x"},
+					},
+				},
+				Operator: TokenPower,
+				Right: &UnaryExpression{
+					Operator: TokenMinus,
+					Right:    &NumberExpression{Value: "2"},
+				},
+			},
+		},
+		Operator: TokenPower,
+		Right: &UnaryExpression{
+			Operator: TokenMinus,
+			Right:    &NumberExpression{Value: "3"},
+		},
+	}
+
+	expected := &VariableExpression{Name: "h11"}
+
+	result := b.Build(expr)
+
+	if !reflect.DeepEqual(result, expected) {
+		t.Fatalf("expected expression h11, got %#v", result)
+	}
+
+	if len(b.Assignments) != 11 {
+		t.Fatalf("expected 11 assignments, got %d", len(b.Assignments))
+	}
+
+	expectedAssignments := []assignment{
+		{
+			Name: "h1",
+			Expr: &BinaryExpression{
+				Left:     &VariableExpression{Name: "x"},
+				Operator: TokenMultiply,
+				Right:    &VariableExpression{Name: "x"},
+			},
+		},
+		{
+			Name: "h2",
+			Expr: &BinaryExpression{
+				Left:     &VariableExpression{Name: "h1"},
+				Operator: TokenPlus,
+				Right:    &VariableExpression{Name: "y"},
+			},
+		},
+		{
+			Name: "h3",
+			Expr: &BinaryExpression{
+				Left:     &VariableExpression{Name: "h2"},
+				Operator: TokenMultiply,
+				Right:    &VariableExpression{Name: "h2"},
+			},
+		},
+		{
+			Name: "h4",
+			Expr: &BinaryExpression{
+				Left:     &VariableExpression{Name: "h3"},
+				Operator: TokenMultiply,
+				Right:    &VariableExpression{Name: "h2"},
+			},
+		},
+		{
+			Name: "h5",
+			Expr: &FunctionCallExpression{
+				Name: "sin",
+				Arguments: []Expression{
+					&VariableExpression{Name: "x"},
+				},
+			},
+		},
+		{
+			Name: "h6",
+			Expr: &BinaryExpression{
+				Left:     &VariableExpression{Name: "h5"},
+				Operator: TokenMultiply,
+				Right:    &VariableExpression{Name: "h5"},
+			},
+		},
+		{
+			Name: "h7",
+			Expr: &BinaryExpression{
+				Left:     &NumberExpression{Value: "1"},
+				Operator: TokenDivide,
+				Right:    &VariableExpression{Name: "h6"},
+			},
+		},
+		{
+			Name: "h8",
+			Expr: &BinaryExpression{
+				Left: &BinaryExpression{
+					Left:     &NumberExpression{Value: "1"},
+					Operator: TokenPlus,
+					Right:    &VariableExpression{Name: "h4"},
+				},
+				Operator: TokenPlus,
+				Right:    &VariableExpression{Name: "h7"},
+			},
+		},
+		{
+			Name: "h9",
+			Expr: &BinaryExpression{
+				Left:     &VariableExpression{Name: "h8"},
+				Operator: TokenMultiply,
+				Right:    &VariableExpression{Name: "h8"},
+			},
+		},
+		{
+			Name: "h10",
+			Expr: &BinaryExpression{
+				Left:     &VariableExpression{Name: "h9"},
+				Operator: TokenMultiply,
+				Right:    &VariableExpression{Name: "h8"},
+			},
+		},
+		{
+			Name: "h11",
+			Expr: &BinaryExpression{
+				Left:     &NumberExpression{Value: "1"},
+				Operator: TokenDivide,
+				Right:    &VariableExpression{Name: "h10"},
+			},
+		},
+	}
+
+	for i, expectedAssignment := range expectedAssignments {
+		if b.Assignments[i].Name != expectedAssignment.Name {
+			t.Fatalf("expected assignment %d name %q, got %q", i, expectedAssignment.Name, b.Assignments[i].Name)
+		}
+		if !reflect.DeepEqual(b.Assignments[i].Expr, expectedAssignment.Expr) {
+			t.Fatalf("expected assignment %d expr %#v, got %#v", i, expectedAssignment.Expr, b.Assignments[i].Expr)
+		}
+	}
+}
