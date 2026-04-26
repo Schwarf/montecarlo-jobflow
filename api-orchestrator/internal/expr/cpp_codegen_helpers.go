@@ -1,6 +1,16 @@
 package expr
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
+
+func cppNumberLiteral(value string) string {
+	if strings.ContainsAny(value, ".eE") {
+		return value
+	}
+	return value + ".0"
+}
 
 func cppBinaryOperator(operator TokenType) (string, error) {
 	switch operator {

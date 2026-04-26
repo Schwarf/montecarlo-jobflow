@@ -7,6 +7,23 @@ import (
 
 type CppCodeGenerator struct{}
 
+func (g *CppCodeGenerator) GenerateSource(
+	functionName string,
+	variableNames []string,
+	assignments []assignment,
+	result Expression,
+) (string, error) {
+	functionCode, err := g.GenerateComputationPlanFunction(functionName, variableNames, assignments, result)
+	if err != nil {
+		return "", err
+	}
+	var builder strings.Builder
+
+	builder.WriteString("#include <cmath>\n\n")
+	builder.WriteString(functionCode)
+	return builder.String(), nil
+}
+
 func (g *CppCodeGenerator) GenerateComputationPlanFunction(
 	functionName string,
 	variableNames []string,
@@ -64,7 +81,7 @@ func (g *CppCodeGenerator) GenerateComputationPlanFunction(
 func (g *CppCodeGenerator) GenerateExpression(expr Expression) (string, error) {
 	switch e := expr.(type) {
 	case *NumberExpression:
-		return e.Value, nil
+		return cppNumberLiteral(e.Value), nil
 	case *VariableExpression:
 		return cppIdentifier(e.Name), nil
 	case *BinaryExpression:
@@ -76,6 +93,10 @@ func (g *CppCodeGenerator) GenerateExpression(expr Expression) (string, error) {
 		right, err := g.GenerateExpression(e.Right)
 		if err != nil {
 			return "", err
+		}
+
+		if e.Operator == TokenPower {
+			return "std::pow(" + left + ", " + right + ")", nil
 		}
 
 		operator, err := cppBinaryOperator(e.Operator)

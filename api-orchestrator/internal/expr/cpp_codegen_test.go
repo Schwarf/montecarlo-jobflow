@@ -131,7 +131,7 @@ func TestCppCodeGeneratorGenerateUnaryExpression(t *testing.T) {
 				Operator: TokenMinus,
 				Right:    &NumberExpression{Value: "4"},
 			},
-			expected: "(-4)",
+			expected: "(-4.0)",
 		},
 		{
 			name: "nested unary around binary",
@@ -499,12 +499,108 @@ func TestCppCodegenPipelineRepeatedOptimizedSubexpressions(t *testing.T) {
 	expected := "double evaluate(double x, double y) {\n" +
 		"    const double h1 = (x + y);\n" +
 		"    const double h2 = (h1 * h1);\n" +
-		"    const double h3 = (1 + h2);\n" +
+		"    const double h3 = (1.0 + h2);\n" +
 		"    const double h4 = (h3 * h3);\n" +
 		"    const double h5 = (h4 * h3);\n" +
 		"    const double h6 = std::sin(x);\n" +
 		"    const double h7 = (h6 * h6);\n" +
 		"    return ((h5 / h7) + h4);\n" +
+		"}\n"
+
+	if code != expected {
+		t.Fatalf("expected:\n%s\ngot:\n%s", expected, code)
+	}
+}
+
+func TestCppCodeGeneratorGenerateGenericPowerExpression(t *testing.T) {
+	tests := []struct {
+		name     string
+		expr     Expression
+		expected string
+	}{
+		{
+			name: "symbolic exponent",
+			expr: &BinaryExpression{
+				Left:     &VariableExpression{Name: "x"},
+				Operator: TokenPower,
+				Right:    &VariableExpression{Name: "y"},
+			},
+			expected: "std::pow(x, y)",
+		},
+		{
+			name: "non integer exponent",
+			expr: &BinaryExpression{
+				Left:     &VariableExpression{Name: "x"},
+				Operator: TokenPower,
+				Right:    &NumberExpression{Value: "2.3482"},
+			},
+			expected: "std::pow(x, 2.3482)",
+		},
+		{
+			name: "fractional negative exponent",
+			expr: &BinaryExpression{
+				Left:     &VariableExpression{Name: "x"},
+				Operator: TokenPower,
+				Right: &BinaryExpression{
+					Left: &UnaryExpression{
+						Operator: TokenMinus,
+						Right:    &NumberExpression{Value: "4"},
+					},
+					Operator: TokenDivide,
+					Right:    &NumberExpression{Value: "3"},
+				},
+			},
+			expected: "std::pow(x, ((-4.0) / 3.0))",
+		},
+	}
+
+	generator := &CppCodeGenerator{}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			code, err := generator.GenerateExpression(tt.expr)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if code != tt.expected {
+				t.Fatalf("expected %q, got %q", tt.expected, code)
+			}
+		})
+	}
+}
+
+func TestCppCodeGeneratorGenerateSource(t *testing.T) {
+	generator := &CppCodeGenerator{}
+
+	assignments := []assignment{
+		{
+			Name: "h1",
+			Expr: &FunctionCallExpression{
+				Name: "sin",
+				Arguments: []Expression{
+					&VariableExpression{Name: "x"},
+				},
+			},
+		},
+	}
+
+	result := &VariableExpression{Name: "h1"}
+
+	code, err := generator.GenerateSource(
+		"evaluate",
+		[]string{"x"},
+		assignments,
+		result,
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expected := "#include <cmath>\n\n" +
+		"double evaluate(double x) {\n" +
+		"    const double h1 = std::sin(x);\n" +
+		"    return h1;\n" +
 		"}\n"
 
 	if code != expected {
