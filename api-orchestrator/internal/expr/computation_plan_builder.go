@@ -74,7 +74,7 @@ func (b *ComputationPlanBuilder) buildPositiveIntegerPower(base Expression, n in
 
 func (b *ComputationPlanBuilder) buildIntegerPower(base Expression, n int) Expression {
 	if n == 0 {
-		panic("power 0 not implemented")
+		return &NumberExpression{Value: "1"}
 	}
 
 	if n > 0 {
@@ -96,7 +96,10 @@ func (b *ComputationPlanBuilder) Build(expr Expression) Expression {
 	case *BinaryExpression:
 		if e.Operator == TokenPower {
 			n, ok := IntegerLiteralValue(e.Right)
-			if ok && n != 0 {
+			if ok {
+				if n == 0 {
+					return b.buildIntegerPower(nil, 0)
+				}
 				base := b.Build(e.Left)
 				base = b.assignNonTrivialToTempVariable(base)
 				return b.buildIntegerPower(base, n)

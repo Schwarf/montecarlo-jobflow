@@ -1244,3 +1244,58 @@ func TestComputationPlanBuilderLeavesVariablePowerUnchanged(t *testing.T) {
 		t.Fatalf("expected 0 assignments, got %d", len(b.Assignments))
 	}
 }
+
+func TestComputationPlanBuilderBuildPowerOfZero(t *testing.T) {
+	testCases := []struct {
+		name string
+		expr Expression
+	}{
+		{
+			name: "variable base",
+			expr: &BinaryExpression{
+				Left:     &VariableExpression{Name: "x"},
+				Operator: TokenPower,
+				Right:    &NumberExpression{Value: "0"},
+			},
+		},
+		{
+			name: "number base",
+			expr: &BinaryExpression{
+				Left:     &NumberExpression{Value: "10"},
+				Operator: TokenPower,
+				Right:    &NumberExpression{Value: "0"},
+			},
+		},
+		{
+			name: "function base",
+			expr: &BinaryExpression{
+				Left: &FunctionCallExpression{
+					Name: "sin",
+					Arguments: []Expression{
+						&VariableExpression{Name: "x"},
+					},
+				},
+				Operator: TokenPower,
+				Right:    &NumberExpression{Value: "0"},
+			},
+		},
+	}
+
+	expected := &NumberExpression{Value: "1"}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var b ComputationPlanBuilder
+
+			result := b.Build(tc.expr)
+
+			if !reflect.DeepEqual(result, expected) {
+				t.Fatalf("expected expression 1, got %#v", result)
+			}
+
+			if len(b.Assignments) != 0 {
+				t.Fatalf("expected 0 assignments, got %d", len(b.Assignments))
+			}
+		})
+	}
+}
