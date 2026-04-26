@@ -1200,3 +1200,47 @@ func TestComputationPlanBuilderBuildUnaryMinusOfSquare(t *testing.T) {
 		t.Fatalf("expected assignment x*x, got %#v", b.Assignments[0].Expr)
 	}
 }
+
+func TestComputationPlanBuilderLeavesRationalPowerUnchanged(t *testing.T) {
+	var b ComputationPlanBuilder
+
+	expr := &BinaryExpression{
+		Left:     &VariableExpression{Name: "x"},
+		Operator: TokenPower,
+		Right: &BinaryExpression{
+			Left:     &NumberExpression{Value: "4"},
+			Operator: TokenDivide,
+			Right:    &NumberExpression{Value: "3"},
+		},
+	}
+
+	result := b.Build(expr)
+
+	if !reflect.DeepEqual(result, expr) {
+		t.Fatalf("expected expression to stay unchanged, got %#v", result)
+	}
+
+	if len(b.Assignments) != 0 {
+		t.Fatalf("expected 0 assignments, got %d", len(b.Assignments))
+	}
+}
+
+func TestComputationPlanBuilderLeavesVariablePowerUnchanged(t *testing.T) {
+	var b ComputationPlanBuilder
+
+	expr := &BinaryExpression{
+		Left:     &VariableExpression{Name: "x"},
+		Operator: TokenPower,
+		Right:    &VariableExpression{Name: "y"},
+	}
+
+	result := b.Build(expr)
+
+	if !reflect.DeepEqual(result, expr) {
+		t.Fatalf("expected expression to stay unchanged, got %#v", result)
+	}
+
+	if len(b.Assignments) != 0 {
+		t.Fatalf("expected 0 assignments, got %d", len(b.Assignments))
+	}
+}
