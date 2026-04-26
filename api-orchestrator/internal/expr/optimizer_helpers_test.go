@@ -104,3 +104,45 @@ func TestTrivialInvalidCases(t *testing.T) {
 		t.Fatal("expected nontrivial expression: function")
 	}
 }
+
+func TestExpressionKeySameStructure(t *testing.T) {
+	expr1 := &BinaryExpression{
+		Left:     &VariableExpression{Name: "x"},
+		Operator: TokenMultiply,
+		Right:    &VariableExpression{Name: "x"},
+	}
+
+	expr2 := &BinaryExpression{
+		Left:     &VariableExpression{Name: "x"},
+		Operator: TokenMultiply,
+		Right:    &VariableExpression{Name: "x"},
+	}
+
+	key1 := ExpressionKey(expr1)
+	key2 := ExpressionKey(expr2)
+
+	if key1 != key2 {
+		t.Fatalf("expected same key, got %q and %q", key1, key2)
+	}
+}
+
+func TestExpressionKeyDifferentStructure(t *testing.T) {
+	expr1 := &BinaryExpression{
+		Left:     &VariableExpression{Name: "x"},
+		Operator: TokenMultiply,
+		Right:    &VariableExpression{Name: "x"},
+	}
+
+	expr2 := &BinaryExpression{
+		Left:     &VariableExpression{Name: "x"},
+		Operator: TokenMultiply,
+		Right:    &VariableExpression{Name: "y"},
+	}
+
+	key1 := ExpressionKey(expr1)
+	key2 := ExpressionKey(expr2)
+
+	if key1 == key2 {
+		t.Fatalf("expected different keys, got %q", key1)
+	}
+}

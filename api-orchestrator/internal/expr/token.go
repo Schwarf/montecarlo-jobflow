@@ -53,3 +53,20 @@ func (t TokenType) String() string {
 		return fmt.Sprintf("TokenType(%d)", int(t))
 	}
 }
+
+func tokenTypeKey(t TokenType) string {
+	switch t {
+	case TokenPlus:
+		return "+"
+	case TokenMinus:
+		return "-"
+	case TokenMultiply:
+		return "*"
+	case TokenDivide:
+		return "/"
+	case TokenPower:
+		return "^"
+	default:
+		return fmt.Sprintf("tok%d", t)
+	}
+}

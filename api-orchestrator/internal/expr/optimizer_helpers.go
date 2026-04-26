@@ -36,3 +36,32 @@ func IsTrivial(expr Expression) bool {
 		return false
 	}
 }
+
+func ExpressionKey(expr Expression) string {
+	switch e := expr.(type) {
+	case *NumberExpression:
+		return "num(" + e.Value + ")"
+
+	case *VariableExpression:
+		return "var(" + e.Name + ")"
+
+	case *UnaryExpression:
+		return "unary(" + tokenTypeKey(e.Operator) + "," + ExpressionKey(e.Right) + ")"
+
+	case *BinaryExpression:
+		return "binary(" + tokenTypeKey(e.Operator) + "," +
+			ExpressionKey(e.Left) + "," +
+			ExpressionKey(e.Right) + ")"
+
+	case *FunctionCallExpression:
+		key := "call(" + e.Name
+		for _, arg := range e.Arguments {
+			key += "," + ExpressionKey(arg)
+		}
+		key += ")"
+		return key
+
+	default:
+		panic("unsupported expression type in ExpressionKey")
+	}
+}
