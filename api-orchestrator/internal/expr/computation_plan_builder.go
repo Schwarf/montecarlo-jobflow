@@ -153,23 +153,34 @@ func (b *ComputationPlanBuilder) BuildInverseSquare(expr *BinaryExpression) (Exp
 	return b.AssignToTempVariable(div), true
 }
 
+func (b *ComputationPlanBuilder) BuildIntegerPower(base Expression, n int) Expression {
+	if n == 0 {
+		panic("power 0 not implemented")
+	}
+
+	if n > 0 {
+		return b.BuildPositiveIntegerPower(base, n)
+	}
+
+	positive := b.BuildPositiveIntegerPower(base, -n)
+
+	div := &BinaryExpression{
+		Left:     &NumberExpression{Value: "1"},
+		Operator: TokenDivide,
+		Right:    positive,
+	}
+	return b.AssignToTempVariable(div)
+}
+
 func (b *ComputationPlanBuilder) Build(expr Expression) Expression {
 	switch e := expr.(type) {
 	case *BinaryExpression:
-		one, ok := b.SimplifyPowerOfOne(e)
-		if ok {
-			return one
-		}
-		inverse, ok := b.SimplifyPowerOfMinusOne(e)
-		if ok {
-			return inverse
-		}
 		if e.Operator == TokenPower {
 			n, ok := IntegerLiteralValue(e.Right)
-			if ok && n > 0 {
+			if ok && n != 0 {
 				base := b.Build(e.Left)
 				base = b.AssignNonTrivialToTempVariable(base)
-				return b.BuildPositiveIntegerPower(base, n)
+				return b.BuildIntegerPower(base, n)
 			}
 		}
 
