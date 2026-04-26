@@ -7,6 +7,60 @@ import (
 
 type CppCodeGenerator struct{}
 
+func (g *CppCodeGenerator) GenerateComputationPlanFunction(
+	functionName string,
+	variableNames []string,
+	assignments []assignment,
+	result Expression,
+) (string, error) {
+	if functionName == "" {
+		return "", fmt.Errorf("functionName must not be empty")
+	}
+
+	var builder strings.Builder
+	// function declaration
+	builder.WriteString("double ")
+	builder.WriteString(functionName)
+
+	// function arguments
+	builder.WriteString("(")
+
+	for i, variableName := range variableNames {
+		if i > 0 {
+			builder.WriteString(", ")
+		}
+		builder.WriteString("double ")
+		builder.WriteString(variableName)
+	}
+
+	// function body
+	builder.WriteString(") {\n")
+	for _, assign := range assignments {
+		rhs, err := g.GenerateExpression(assign.Expr)
+		if err != nil {
+			return "", err
+		}
+
+		builder.WriteString("    const double ")
+		builder.WriteString(assign.Name)
+		builder.WriteString(" = ")
+		builder.WriteString(rhs)
+		builder.WriteString(";\n")
+	}
+
+	returnExpr, err := g.GenerateExpression(result)
+	if err != nil {
+		return "", err
+	}
+
+	builder.WriteString("    return ")
+	builder.WriteString(returnExpr)
+	builder.WriteString(";\n")
+	builder.WriteString("}\n")
+
+	return builder.String(), nil
+}
+
 func (g *CppCodeGenerator) GenerateExpression(expr Expression) (string, error) {
 	switch e := expr.(type) {
 	case *NumberExpression:

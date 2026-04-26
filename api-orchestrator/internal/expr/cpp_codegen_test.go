@@ -423,3 +423,53 @@ func TestCppCodeGeneratorGenerateBuiltInConstants(t *testing.T) {
 		})
 	}
 }
+
+// TODO: Exact string testing ... rather brittle
+func TestCppCodeGeneratorGenerateComputationPlanFunction(t *testing.T) {
+	generator := &CppCodeGenerator{}
+
+	assignments := []assignment{
+		{
+			Name: "h1",
+			Expr: &BinaryExpression{
+				Left:     &VariableExpression{Name: "x"},
+				Operator: TokenMultiply,
+				Right:    &VariableExpression{Name: "x"},
+			},
+		},
+		{
+			Name: "h2",
+			Expr: &BinaryExpression{
+				Left:     &VariableExpression{Name: "h1"},
+				Operator: TokenPlus,
+				Right:    &VariableExpression{Name: "y"},
+			},
+		},
+	}
+
+	result := &BinaryExpression{
+		Left:     &VariableExpression{Name: "h2"},
+		Operator: TokenMultiply,
+		Right:    &VariableExpression{Name: "h2"},
+	}
+
+	code, err := generator.GenerateComputationPlanFunction(
+		"evaluate",
+		[]string{"x", "y"},
+		assignments,
+		result,
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expected := "double evaluate(double x, double y) {\n" +
+		"    const double h1 = (x * x);\n" +
+		"    const double h2 = (h1 + y);\n" +
+		"    return (h2 * h2);\n" +
+		"}\n"
+
+	if code != expected {
+		t.Fatalf("expected:\n%s\ngot:\n%s", expected, code)
+	}
+}
