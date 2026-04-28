@@ -136,4 +136,18 @@ SELECT
 	return j, nil
 }
 
+func (r *Repository) MarkRunning(ctx context.Context, id string) error {
+	return r.updateJobStatus(ctx, id, job.StatusRunning, nil, nil)
+}
+
+func (r *Repository) MarkCompleted(ctx context.Context, id string, resultJSON string) error {
+	return r.updateJobStatus(ctx, id, job.StatusCompleted, &resultJSON, nil)
+}
+
+func (r *Repository) MarkFailed(ctx context.Context, id string, errorMessage string) error {
+	return r.updateJobStatus(ctx, id, job.StatusCompleted, nil, &errorMessage)
+}
+
+func
+
 var _ job.Repository = (*Repository)(nil)
