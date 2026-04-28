@@ -45,12 +45,7 @@ func (r *CreateJobRequest) ValidateBasic() error {
 }
 
 func (r *CreateJobRequest) ValidateSemantics() error {
-	context := expr.DefaultValidationContext()
-	for _, variable := range r.IntegrationVariables {
-		context.UserVariables[variable.Name] = struct{}{}
-	}
-
-	_, err := expr.ParseAndValidate(r.Integrand, context)
+	_, err := expr.ParseAndValidate(r.Integrand, r.ExpressionValidationContext())
 	return err
 }
 
