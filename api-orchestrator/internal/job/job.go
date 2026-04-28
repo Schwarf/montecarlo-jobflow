@@ -7,7 +7,7 @@ type Status string
 const (
 	StatusQueued    Status = "queued"
 	StatusRunning   Status = "running"
-	StatusSucceeded Status = "succeeded"
+	StatusCompleted Status = "completed"
 	StatusFailed    Status = "failed"
 	StatusCanceled  Status = "canceled"
 )
