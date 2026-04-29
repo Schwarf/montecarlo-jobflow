@@ -137,17 +137,36 @@ SELECT
 }
 
 func (r *Repository) MarkRunning(ctx context.Context, id string) error {
-	return r.updateJobStatus(ctx, id, job.StatusRunning, nil, nil)
+	return r.updateJobStatus(ctx, id, string(job.StatusRunning), nil, nil)
 }
 
 func (r *Repository) MarkCompleted(ctx context.Context, id string, resultJSON string) error {
-	return r.updateJobStatus(ctx, id, job.StatusCompleted, &resultJSON, nil)
+	return r.updateJobStatus(ctx, id, string(job.StatusCompleted), &resultJSON, nil)
 }
 
 func (r *Repository) MarkFailed(ctx context.Context, id string, errorMessage string) error {
-	return r.updateJobStatus(ctx, id, job.StatusCompleted, nil, &errorMessage)
+	return r.updateJobStatus(ctx, id, string(job.StatusCompleted), nil, &errorMessage)
 }
 
-func
+func (r *Repository) updateJobStatus(ctx context.Context, id string, status string, resultJSON *string, errorMessage *string) error {
+	const query = ` 
+	UPDATE jobs
+	SET status = ?, result_json = ?, error_message = ?, updated_at = ? WHERE id = ?`
+
+	result, err := r.db.ExecContext(ctx, query, status, resultJSON, errorMessage, time.Now().UTC().Format(time.RFC3339), id)
+
+	if err != nil {
+		return fmt.Errorf("update job status: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("get rows affected: %w", err)
+	}
+	if rowsAffected == 0 {
+		return job.ErrJobNotFound
+	}
+	return nil
+}
 
 var _ job.Repository = (*Repository)(nil)
