@@ -145,13 +145,13 @@ func (r *Repository) MarkCompleted(ctx context.Context, id string, resultJSON st
 }
 
 func (r *Repository) MarkFailed(ctx context.Context, id string, errorMessage string) error {
-	return r.updateJobStatus(ctx, id, string(job.StatusCompleted), nil, &errorMessage)
+	return r.updateJobStatus(ctx, id, string(job.StatusFailed), nil, &errorMessage)
 }
 
 func (r *Repository) updateJobStatus(ctx context.Context, id string, status string, resultJSON *string, errorMessage *string) error {
 	const query = ` 
 	UPDATE jobs
-	SET status = ?, result_json = ?, error_message = ?, updated_at = ? WHERE id = ?`
+	SET status = ?, result_json = ?, error_message = ?, updated_at = ? WHERE job_id = ?`
 
 	result, err := r.db.ExecContext(ctx, query, status, resultJSON, errorMessage, time.Now().UTC().Format(time.RFC3339), id)
 

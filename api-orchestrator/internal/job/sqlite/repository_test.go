@@ -32,6 +32,12 @@ func newTestDB(t *testing.T) *sql.DB {
 	return db
 }
 
+func newTestRepository(t *testing.T) *Repository {
+	t.Helper()
+
+	return NewRepository(newTestDB(t))
+}
+
 func testJob() job.Job {
 	ts := time.Date(2026, 4, 19, 12, 30, 45, 0, time.UTC)
 
@@ -46,6 +52,96 @@ func testJob() job.Job {
 		ResultJSON:           nil,
 		CreatedAt:            ts,
 		UpdatedAt:            ts,
+	}
+}
+
+func createTestJob(t *testing.T, repo *Repository) job.Job {
+	t.Helper()
+
+	j := testJob()
+	if err := repo.Create(context.Background(), j); err != nil {
+		t.Fatalf("Create returned error: %v", err)
+	}
+
+	return j
+}
+
+func mustGetJob(t *testing.T, repo *Repository, id string) job.Job {
+	t.Helper()
+
+	got, err := repo.GetByID(context.Background(), id)
+	if err != nil {
+		t.Fatalf("GetByID returned error: %v", err)
+	}
+
+	return got
+}
+
+func assertStatus(t *testing.T, got job.Job, want job.Status) {
+	t.Helper()
+
+	if got.Status != want {
+		t.Fatalf("Status mismatch: got %q want %q", got.Status, want)
+	}
+}
+
+func assertNilStringPtr(t *testing.T, name string, got *string) {
+	t.Helper()
+
+	if got != nil {
+		t.Fatalf("expected nil %s, got %q", name, *got)
+	}
+}
+
+func assertStringPtrValue(t *testing.T, name string, got *string, want string) {
+	t.Helper()
+
+	if got == nil {
+		t.Fatalf("expected %s, got nil", name)
+	}
+
+	if *got != want {
+		t.Fatalf("%s mismatch: got %q want %q", name, *got, want)
+	}
+}
+
+func assertUpdatedAfter(t *testing.T, got job.Job, previous time.Time) {
+	t.Helper()
+
+	if !got.UpdatedAt.After(previous) {
+		t.Fatalf("expected UpdatedAt to be after original UpdatedAt, got %v want after %v", got.UpdatedAt, previous)
+	}
+}
+
+func assertInsertedJobMatches(t *testing.T, got job.Job, want job.Job) {
+	t.Helper()
+
+	if got.ID != want.ID {
+		t.Fatalf("ID mismatch: got %q want %q", got.ID, want.ID)
+	}
+	if got.Name != want.Name {
+		t.Fatalf("Name mismatch: got %q want %q", got.Name, want.Name)
+	}
+	if got.Integrand != want.Integrand {
+		t.Fatalf("Integrand mismatch: got %q want %q", got.Integrand, want.Integrand)
+	}
+	if got.Evaluations != want.Evaluations {
+		t.Fatalf("Evaluations mismatch: got %d want %d", got.Evaluations, want.Evaluations)
+	}
+	if got.Status != want.Status {
+		t.Fatalf("Status mismatch: got %q want %q", got.Status, want.Status)
+	}
+	if !got.CreatedAt.Equal(want.CreatedAt) {
+		t.Fatalf("CreatedAt mismatch: got %v want %v", got.CreatedAt, want.CreatedAt)
+	}
+	if !got.UpdatedAt.Equal(want.UpdatedAt) {
+		t.Fatalf("UpdatedAt mismatch: got %v want %v", got.UpdatedAt, want.UpdatedAt)
+	}
+	if got.ErrorMessage != nil {
+		t.Fatalf("expected nil ErrorMessage, got %v", *got.ErrorMessage)
+	}
+	if got.ResultJSON != nil {
+		t.Fatalf("expected nil ResultJSON, got %v", *got.ResultJSON)
 	}
 }
 
@@ -154,14 +250,9 @@ WHERE job_id = ?;`
 }
 
 func TestRepositoryCreateDuplicateJobIDFails(t *testing.T) {
-	db := newTestDB(t)
-	repo := NewRepository(db)
+	repo := newTestRepository(t)
 
-	j := testJob()
-
-	if err := repo.Create(context.Background(), j); err != nil {
-		t.Fatalf("first Create returned error: %v", err)
-	}
+	j := createTestJob(t, repo)
 
 	err := repo.Create(context.Background(), j)
 	if err == nil {
@@ -178,9 +269,7 @@ func TestRepositoryCreateDuplicateJobIDFails(t *testing.T) {
 // is called, Create should return a cancellation-related error. The exact error
 // behavior is somewhat driver-dependent and may differ with another SQL driver.
 func TestRepositoryCreateWithCanceledContextFails(t *testing.T) {
-	db := newTestDB(t)
-	repo := NewRepository(db)
-
+	repo := newTestRepository(t)
 	j := testJob()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -197,44 +286,74 @@ func TestRepositoryCreateWithCanceledContextFails(t *testing.T) {
 }
 
 func TestRepositoryGetByIDReturnsInsertedJob(t *testing.T) {
-	db := newTestDB(t)
-	repo := NewRepository(db)
+	repo := newTestRepository(t)
 
-	j := testJob()
-	if err := repo.Create(context.Background(), j); err != nil {
-		t.Fatalf("Create returned error: %v", err)
+	j := createTestJob(t, repo)
+	got := mustGetJob(t, repo, j.ID)
+
+	assertInsertedJobMatches(t, got, j)
+}
+
+func TestRepositoryMarkRunningUpdatesJobStatus(t *testing.T) {
+	repo := newTestRepository(t)
+
+	j := createTestJob(t, repo)
+
+	if err := repo.MarkRunning(context.Background(), j.ID); err != nil {
+		t.Fatalf("MarkRunning returned error: %v", err)
 	}
 
-	got, err := repo.GetByID(context.Background(), j.ID)
-	if err != nil {
-		t.Fatalf("GetByID returned error: %v", err)
+	got := mustGetJob(t, repo, j.ID)
+
+	assertStatus(t, got, job.StatusRunning)
+	assertNilStringPtr(t, "ResultJSON", got.ResultJSON)
+	assertNilStringPtr(t, "ErrorMessage", got.ErrorMessage)
+	assertUpdatedAfter(t, got, j.UpdatedAt)
+}
+
+func TestRepositoryMarkCompletedStoresResult(t *testing.T) {
+	repo := newTestRepository(t)
+
+	j := createTestJob(t, repo)
+
+	const resultJSON = `{"estimate":1.234,"error":0.001}`
+
+	if err := repo.MarkCompleted(context.Background(), j.ID, resultJSON); err != nil {
+		t.Fatalf("MarkCompleted returned error: %v", err)
 	}
 
-	if got.ID != j.ID {
-		t.Fatalf("ID mismatch: got %q want %q", got.ID, j.ID)
+	got := mustGetJob(t, repo, j.ID)
+
+	assertStatus(t, got, job.StatusCompleted)
+	assertStringPtrValue(t, "ResultJSON", got.ResultJSON, resultJSON)
+	assertNilStringPtr(t, "ErrorMessage", got.ErrorMessage)
+	assertUpdatedAfter(t, got, j.UpdatedAt)
+}
+
+func TestRepositoryMarkFailedStoresErrorMessage(t *testing.T) {
+	repo := newTestRepository(t)
+
+	j := createTestJob(t, repo)
+
+	const errorMessage = "worker failed"
+
+	if err := repo.MarkFailed(context.Background(), j.ID, errorMessage); err != nil {
+		t.Fatalf("MarkFailed returned error: %v", err)
 	}
-	if got.Name != j.Name {
-		t.Fatalf("Name mismatch: got %q want %q", got.Name, j.Name)
-	}
-	if got.Integrand != j.Integrand {
-		t.Fatalf("Integrand mismatch: got %q want %q", got.Integrand, j.Integrand)
-	}
-	if got.Evaluations != j.Evaluations {
-		t.Fatalf("Evaluations mismatch: got %d want %d", got.Evaluations, j.Evaluations)
-	}
-	if got.Status != j.Status {
-		t.Fatalf("Status mismatch: got %q want %q", got.Status, j.Status)
-	}
-	if !got.CreatedAt.Equal(j.CreatedAt) {
-		t.Fatalf("CreatedAt mismatch: got %v want %v", got.CreatedAt, j.CreatedAt)
-	}
-	if !got.UpdatedAt.Equal(j.UpdatedAt) {
-		t.Fatalf("UpdatedAt mismatch: got %v want %v", got.UpdatedAt, j.UpdatedAt)
-	}
-	if got.ErrorMessage != nil {
-		t.Fatalf("expected nil ErrorMessage, got %v", *got.ErrorMessage)
-	}
-	if got.ResultJSON != nil {
-		t.Fatalf("expected nil ResultJSON, got %v", *got.ResultJSON)
+
+	got := mustGetJob(t, repo, j.ID)
+
+	assertStatus(t, got, job.StatusFailed)
+	assertStringPtrValue(t, "ErrorMessage", got.ErrorMessage, errorMessage)
+	assertNilStringPtr(t, "ResultJSON", got.ResultJSON)
+	assertUpdatedAfter(t, got, j.UpdatedAt)
+}
+
+func TestRepositoryLifecycleUpdateUnknownJobReturnsErrJobNotFound(t *testing.T) {
+	repo := newTestRepository(t)
+
+	err := repo.MarkRunning(context.Background(), "unknown-job-id")
+	if !errors.Is(err, job.ErrJobNotFound) {
+		t.Fatalf("expected ErrJobNotFound, got %v", err)
 	}
 }
