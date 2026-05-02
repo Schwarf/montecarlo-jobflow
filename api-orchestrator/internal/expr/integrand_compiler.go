@@ -31,5 +31,3 @@ func (c *IntegrandCompiler) CompileToHeader(
 		result,
 	)
 }
-
-// TODO no TESTs
