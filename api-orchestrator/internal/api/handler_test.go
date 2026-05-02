@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -232,5 +233,299 @@ func TestGetJobHandlerReturnsExistingJob(t *testing.T) {
 	gotVar := resp.IntegrationVariables[0]
 	if gotVar.Name != "x" || gotVar.Lower != "0" || gotVar.Upper != "1" {
 		t.Fatalf("unexpected integration variable: %+v", gotVar)
+	}
+}
+
+func TestGetJobHandlerReturnsNotFoundForUnknownJob(t *testing.T) {
+	repo := &fakeRepository{
+		getErr: job.ErrJobNotFound,
+	}
+	h := NewHandler(repo)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/jobs/unknown-job-id", nil)
+	req.SetPathValue("jobId", "unknown-job-id")
+
+	rec := httptest.NewRecorder()
+
+	h.GetJobHandler(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected status %d, got %d", http.StatusNotFound, rec.Code)
+	}
+
+	var resp ErrorResponse
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response body: %v", err)
+	}
+
+	if resp.Error != "job not found" {
+		t.Fatalf("expected error %q, got %q", "job not found", resp.Error)
+	}
+}
+
+func TestCreateJobHandlerReturnsInternalServerErrorWhenCreateFails(t *testing.T) {
+	repo := &fakeRepository{
+		createErr: fmt.Errorf("database unavailable"),
+	}
+	h := NewHandler(repo)
+
+	body := `{
+		"name": "test-job",
+		"integrand": "x + 1",
+		"variables": [
+			{"name": "x", "lower": "0", "upper": "1"}
+		],
+		"evaluations": 1000
+	}`
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/jobs", strings.NewReader(body))
+	rec := httptest.NewRecorder()
+
+	h.CreateJobHandler(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected status %d, got %d", http.StatusInternalServerError, rec.Code)
+	}
+
+	var resp ErrorResponse
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response body: %v", err)
+	}
+
+	if resp.Error != "failed to persist job" {
+		t.Fatalf("expected error %q, got %q", "failed to persist job", resp.Error)
+	}
+}
+
+func TestCreateJobHandlerRejectsInvalidJSON(t *testing.T) {
+	repo := &fakeRepository{}
+	h := NewHandler(repo)
+
+	body := `{"name": "test-job"`
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/jobs", strings.NewReader(body))
+	rec := httptest.NewRecorder()
+
+	h.CreateJobHandler(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+
+	var resp ErrorResponse
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response body: %v", err)
+	}
+
+	if resp.Error != "invalid JSON body" {
+		t.Fatalf("expected error %q, got %q", "invalid JSON body", resp.Error)
+	}
+
+	if repo.createdJob != nil {
+		t.Fatal("expected no job to be persisted")
+	}
+}
+
+func TestCreateJobHandlerRejectsUnknownJSONField(t *testing.T) {
+	repo := &fakeRepository{}
+	h := NewHandler(repo)
+
+	body := `{
+		"name": "test-job",
+		"integrand": "x + 1",
+		"variables": [
+			{"name": "x", "lower": "0", "upper": "1"}
+		],
+		"evaluations": 1000,
+		"unexpected": true
+	}`
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/jobs", strings.NewReader(body))
+	rec := httptest.NewRecorder()
+
+	h.CreateJobHandler(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+
+	var resp ErrorResponse
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response body: %v", err)
+	}
+
+	if resp.Error != "invalid JSON body" {
+		t.Fatalf("expected error %q, got %q", "invalid JSON body", resp.Error)
+	}
+
+	if repo.createdJob != nil {
+		t.Fatal("expected no job to be persisted")
+	}
+}
+
+func TestCreateJobHandlerRejectsMultipleJSONObjects(t *testing.T) {
+	repo := &fakeRepository{}
+	h := NewHandler(repo)
+
+	body := `{
+		"name": "test-job",
+		"integrand": "x + 1",
+		"variables": [
+			{"name": "x", "lower": "0", "upper": "1"}
+		],
+		"evaluations": 1000
+	}
+	{
+		"name": "second-job",
+		"integrand": "x + 2",
+		"variables": [
+			{"name": "x", "lower": "0", "upper": "1"}
+		],
+		"evaluations": 1000
+	}`
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/jobs", strings.NewReader(body))
+	rec := httptest.NewRecorder()
+
+	h.CreateJobHandler(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+
+	var resp ErrorResponse
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response body: %v", err)
+	}
+
+	expectedError := "request body must contain exactly one JSON object"
+	if resp.Error != expectedError {
+		t.Fatalf("expected error %q, got %q", expectedError, resp.Error)
+	}
+
+	if repo.createdJob != nil {
+		t.Fatal("expected no job to be persisted")
+	}
+}
+
+func TestCreateJobHandlerRejectsBasicValidationError(t *testing.T) {
+	repo := &fakeRepository{}
+	h := NewHandler(repo)
+
+	body := `{
+		"name": "",
+		"integrand": "x + 1",
+		"variables": [
+			{"name": "x", "lower": "0", "upper": "1"}
+		],
+		"evaluations": 1000
+	}`
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/jobs", strings.NewReader(body))
+	rec := httptest.NewRecorder()
+
+	h.CreateJobHandler(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+
+	var resp ErrorResponse
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response body: %v", err)
+	}
+
+	if resp.Error != "name must not be empty" {
+		t.Fatalf("expected error %q, got %q", "name must not be empty", resp.Error)
+	}
+
+	if repo.createdJob != nil {
+		t.Fatal("expected no job to be persisted")
+	}
+}
+
+func TestCreateJobHandlerRejectsSemanticValidationError(t *testing.T) {
+	repo := &fakeRepository{}
+	h := NewHandler(repo)
+
+	body := `{
+		"name": "test-job",
+		"integrand": "x + y",
+		"variables": [
+			{"name": "x", "lower": "0", "upper": "1"}
+		],
+		"evaluations": 1000
+	}`
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/jobs", strings.NewReader(body))
+	rec := httptest.NewRecorder()
+
+	h.CreateJobHandler(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+
+	var resp ErrorResponse
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response body: %v", err)
+	}
+
+	if resp.Error == "" {
+		t.Fatal("expected non-empty validation error")
+	}
+
+	if repo.createdJob != nil {
+		t.Fatal("expected no job to be persisted")
+	}
+}
+
+func TestGetJobHandlerReturnsInternalServerErrorForRepositoryError(t *testing.T) {
+	repo := &fakeRepository{
+		getErr: fmt.Errorf("database unavailable"),
+	}
+	h := NewHandler(repo)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/jobs/job-123", nil)
+	req.SetPathValue("jobId", "job-123")
+
+	rec := httptest.NewRecorder()
+
+	h.GetJobHandler(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected status %d, got %d", http.StatusInternalServerError, rec.Code)
+	}
+
+	var resp ErrorResponse
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response body: %v", err)
+	}
+
+	if resp.Error != "failed to retrieve job" {
+		t.Fatalf("expected error %q, got %q", "failed to retrieve job", resp.Error)
+	}
+}
+
+func TestGetJobHandlerRejectsMissingJobID(t *testing.T) {
+	repo := &fakeRepository{}
+	h := NewHandler(repo)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/jobs/", nil)
+	rec := httptest.NewRecorder()
+
+	h.GetJobHandler(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+
+	var resp ErrorResponse
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response body: %v", err)
+	}
+
+	if resp.Error != "missing job id" {
+		t.Fatalf("expected error %q, got %q", "missing job id", resp.Error)
 	}
 }
