@@ -22,12 +22,6 @@ func NewHandler(repo job.Repository) *Handler {
 }
 
 func (h *Handler) HealthHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeJSON(w, http.StatusMethodNotAllowed, ErrorResponse{
-			Error: "method not allowed",
-		})
-		return
-	}
 	writeJSON(w, http.StatusOK, map[string]string{
 		"status":  "ok",
 		"service": "api-orchestrator",
@@ -35,12 +29,6 @@ func (h *Handler) HealthHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CreateJobHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, ErrorResponse{
-			Error: "method not allowed",
-		})
-		return
-	}
 	defer r.Body.Close()
 
 	var req CreateJobRequest
@@ -115,13 +103,6 @@ func (h *Handler) CreateJobHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetJobHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeJSON(w, http.StatusMethodNotAllowed, ErrorResponse{
-			Error: "method not allowed",
-		})
-		return
-	}
-
 	jobID := r.PathValue("jobId")
 	if jobID == "" {
 		writeJSON(w, http.StatusBadRequest, ErrorResponse{
