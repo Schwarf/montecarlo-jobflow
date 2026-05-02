@@ -113,3 +113,57 @@ func (h *Handler) CreateJobHandler(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusAccepted, resp)
 }
+
+func (h *Handler) GetJobHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, ErrorResponse{
+			Error: "method not allowed",
+		})
+		return
+	}
+
+	jobID := r.PathValue("jobId")
+	if jobID == "" {
+		writeJSON(w, http.StatusBadRequest, ErrorResponse{
+			Error: "missing job id",
+		})
+		return
+	}
+
+	j, err := h.repo.GetByID(r.Context(), jobID)
+	if err != nil {
+		if errors.Is(err, job.ErrJobNotFound) {
+			writeJSON(w, http.StatusNotFound, ErrorResponse{
+				Error: "job not found",
+			})
+			return
+		}
+
+		writeJSON(w, http.StatusInternalServerError, ErrorResponse{
+			Error: "failed to retrieve job",
+		})
+		return
+	}
+
+	integrationVars := make([]VariableSpec, 0, len(j.IntegrationVariables))
+	for _, v := range j.IntegrationVariables {
+		integrationVars = append(integrationVars, VariableSpec{
+			Name:  v.Name,
+			Lower: v.Lower,
+			Upper: v.Upper,
+		})
+	}
+
+	writeJSON(w, http.StatusOK, GetJobResponse{
+		JobID:                j.ID,
+		Name:                 j.Name,
+		Integrand:            j.Integrand,
+		IntegrationVariables: integrationVars,
+		Evaluations:          j.Evaluations,
+		Status:               string(j.Status),
+		ErrorMessage:         j.ErrorMessage,
+		ResultJSON:           j.ResultJSON,
+		CreatedAt:            j.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:            j.UpdatedAt.Format(time.RFC3339),
+	})
+}

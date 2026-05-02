@@ -27,6 +27,19 @@ type CreateJobResponse struct {
 	Status string `json:"status"`
 }
 
+type GetJobResponse struct {
+	JobID                string         `json:"jobId"`
+	Name                 string         `json:"name"`
+	Integrand            string         `json:"integrand"`
+	IntegrationVariables []VariableSpec `json:"variables"`
+	Evaluations          int            `json:"evaluations"`
+	Status               string         `json:"status"`
+	ErrorMessage         *string        `json:"errorMessage,omitempty"`
+	ResultJSON           *string        `json:"resultJson,omitempty"`
+	CreatedAt            string         `json:"createdAt"`
+	UpdatedAt            string         `json:"updatedAt"`
+}
+
 func writeJSON(w http.ResponseWriter, status int, value any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
