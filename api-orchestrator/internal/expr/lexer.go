@@ -165,7 +165,7 @@ func isDigit(r rune) bool {
 }
 
 func isIdentifierStart(r rune) bool {
-	return unicode.IsLetter(r) || r == '_'
+	return unicode.IsLetter(r)
 }
 
 func isIdentifierPart(r rune) bool {
