@@ -3,6 +3,8 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/Schwarf/montecarlo-jobflow/api-orchestrator/internal/job"
 )
 
 type ErrorResponse struct {
@@ -16,10 +18,10 @@ type VariableSpec struct {
 }
 
 type CreateJobRequest struct {
-	Name                 string         `json:"name"`
-	Integrand            string         `json:"integrand"`
-	IntegrationVariables []VariableSpec `json:"variables"`
-	Evaluations          int            `json:"evaluations"`
+	Name                 string             `json:"name"`
+	Integrand            string             `json:"integrand"`
+	IntegrationVariables []job.VariableSpec `json:"variables"`
+	Evaluations          int                `json:"evaluations"`
 }
 
 type CreateJobResponse struct {
