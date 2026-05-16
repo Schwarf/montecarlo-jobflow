@@ -1,12 +1,16 @@
 package api
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/Schwarf/montecarlo-jobflow/api-orchestrator/internal/job"
+)
 
 func validCreateJobRequest() CreateJobRequest {
 	return CreateJobRequest{
 		Name:      "test-job",
 		Integrand: "x + 1",
-		IntegrationVariables: []VariableSpec{
+		IntegrationVariables: []job.VariableSpec{
 			{
 				Name:  "x",
 				Lower: "0",
@@ -68,7 +72,7 @@ func TestValidateBasicRejectsDuplicateVariableNames(t *testing.T) {
 	req := CreateJobRequest{
 		Name:      "test-job",
 		Integrand: "x + 1",
-		IntegrationVariables: []VariableSpec{
+		IntegrationVariables: []job.VariableSpec{
 			{Name: "x", Lower: "0", Upper: "1"},
 			{Name: "x", Lower: "2", Upper: "3"},
 		},
@@ -165,7 +169,7 @@ func TestValidateBasicAcceptsMultipleDistinctVariables(t *testing.T) {
 	req := CreateJobRequest{
 		Name:      "test-job",
 		Integrand: "x + y",
-		IntegrationVariables: []VariableSpec{
+		IntegrationVariables: []job.VariableSpec{
 			{Name: "x", Lower: "0", Upper: "1"},
 			{Name: "y", Lower: "-1", Upper: "2"},
 		},
@@ -182,7 +186,7 @@ func TestValidationComponentsValidIntegrand(t *testing.T) {
 	r := CreateJobRequest{
 		Name:      "test-job",
 		Integrand: validIntegrand,
-		IntegrationVariables: []VariableSpec{
+		IntegrationVariables: []job.VariableSpec{
 			{Name: "x", Lower: "0", Upper: "1"},
 			{Name: "y", Lower: "0", Upper: "1"},
 			{Name: "z", Lower: "0", Upper: "1"},

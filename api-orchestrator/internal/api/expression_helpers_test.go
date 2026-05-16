@@ -1,10 +1,14 @@
 package api
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/Schwarf/montecarlo-jobflow/api-orchestrator/internal/job"
+)
 
 func TestCreateJobRequestVariableNamesPreservesOrder(t *testing.T) {
 	req := CreateJobRequest{
-		IntegrationVariables: []VariableSpec{
+		IntegrationVariables: []job.VariableSpec{
 			{Name: "x", Lower: "0", Upper: "1"},
 			{Name: "y", Lower: "0", Upper: "1"},
 			{Name: "z", Lower: "0", Upper: "1"},
@@ -27,7 +31,7 @@ func TestCreateJobRequestVariableNamesPreservesOrder(t *testing.T) {
 
 func TestCreateJobRequestExpressionValidationContextContainsVariables(t *testing.T) {
 	req := CreateJobRequest{
-		IntegrationVariables: []VariableSpec{
+		IntegrationVariables: []job.VariableSpec{
 			{Name: "x", Lower: "0", Upper: "1"},
 			{Name: "y", Lower: "0", Upper: "1"},
 		},
