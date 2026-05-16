@@ -1,16 +1,12 @@
 package jobdispatch
 
-type IntegrationVariable struct {
-	Name  string `json:"name"`
-	Lower string `json:"lower"`
-	Upper string `json:"upper"`
-}
+import "github.com/Schwarf/montecarlo-jobflow/api-orchestrator/internal/job"
 
 type WorkerSubmission struct {
-	JobID        string                `json:"jobId"`
-	FunctionName string                `json:"functionName"`
-	Integrand    string                `json:"integrand"`
-	Variables    []IntegrationVariable `json:"integrationVariables"`
-	Evaluations  int                   `json:"evaluations"`
-	Header       string                `json:"header"`
+	JobID        string             `json:"jobId"`
+	FunctionName string             `json:"functionName"`
+	Integrand    string             `json:"integrand"`
+	Variables    []job.VariableSpec `json:"integrationVariables"`
+	Evaluations  int                `json:"evaluations"`
+	Header       string             `json:"header"`
 }
