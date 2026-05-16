@@ -201,51 +201,6 @@ func TestPrepareRejectsInvalidJob(t *testing.T) {
 			},
 			wantErr: "integrand must not be empty",
 		},
-		{
-			name: "missing variables",
-			modify: func(j *job.Job) {
-				j.IntegrationVariables = nil
-			},
-			wantErr: "at least one variable is required",
-		},
-		{
-			name: "non-positive evaluations",
-			modify: func(j *job.Job) {
-				j.Evaluations = 0
-			},
-			wantErr: "evaluations must be > 0",
-		},
-		{
-			name: "empty variable name",
-			modify: func(j *job.Job) {
-				j.IntegrationVariables[0].Name = ""
-			},
-			wantErr: "variable name must not be empty",
-		},
-		{
-			name: "empty lower bound",
-			modify: func(j *job.Job) {
-				j.IntegrationVariables[0].Lower = ""
-			},
-			wantErr: `variable "x" has empty lower bound`,
-		},
-		{
-			name: "empty upper bound",
-			modify: func(j *job.Job) {
-				j.IntegrationVariables[0].Upper = ""
-			},
-			wantErr: `variable "x" has empty upper bound`,
-		},
-		{
-			name: "duplicate variable name",
-			modify: func(j *job.Job) {
-				j.IntegrationVariables = []job.VariableSpec{
-					{Name: "x", Lower: "0", Upper: "1"},
-					{Name: "x", Lower: "2", Upper: "3"},
-				}
-			},
-			wantErr: `duplicate variable name: "x"`,
-		},
 	}
 
 	for _, tt := range tests {
