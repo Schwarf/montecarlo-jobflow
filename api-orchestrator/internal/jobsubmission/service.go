@@ -23,6 +23,14 @@ type Service struct {
 	Dispatcher jobdispatch.Dispatcher
 }
 
+func NewService(repository Repository, preparer Preparer, dispatcher jobdispatch.Dispatcher) Service {
+	return Service{
+		Repository: repository,
+		Preparer:   preparer,
+		Dispatcher: dispatcher,
+	}
+}
+
 func (s Service) Submit(ctx context.Context, j job.Job) (job.Job, error) {
 	if s.Repository == nil {
 		return job.Job{}, fmt.Errorf("repository must not be nil")
